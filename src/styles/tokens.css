@@ -1,0 +1,25 @@
+:root {
+  --bg: #0B0F10;
+  --surface: #12181A;
+  --surface-2: #1A2225;
+  --border: #26323A;
+  --text: #E8EEF0;
+  --muted: #8FA1A8;
+  --primary: #10B981;
+  --primary-soft: #6EE7B7;
+  --warning: #F59E0B;
+  --danger: #F87171;
+  --info: #38BDF8;
+
+  /* Rule Colors */
+  --rule-r1: #F59E0B;
+  --rule-r2: #38BDF8;
+  --rule-r3: #A78BFA;
+
+  /* Device Colors */
+  --device-hvac: #10B981;
+  --device-dishwasher: #38BDF8;
+  --device-washer: #A78BFA;
+  --device-vacuum: #F59E0B;
+}
+

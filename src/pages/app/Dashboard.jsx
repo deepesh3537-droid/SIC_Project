@@ -1,0 +1,489 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Zap, 
+  DollarSign, 
+  Flame, 
+  ShieldCheck, 
+  RefreshCw, 
+  ArrowUpRight, 
+  AlertTriangle,
+  Layers,
+  Clock
+} from 'lucide-react';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  Cell,
+  PieChart,
+  Pie
+} from 'recharts';
+import api from '../../services/api.js';
+import PageHeader from '../../components/layout/PageHeader.jsx';
+import StatCard from '../../components/cards/StatCard.jsx';
+import ChartCard from '../../components/cards/ChartCard.jsx';
+import AlertCard from '../../components/cards/AlertCard.jsx';
+import Badge from '../../components/ui/Badge.jsx';
+import LoadingState from '../../components/ui/LoadingState.jsx';
+import ErrorState from '../../components/ui/ErrorState.jsx';
+import EmptyState from '../../components/ui/EmptyState.jsx';
+import { formatCurrency, formatKwh, formatNumber, formatPercent } from '../../lib/utils.js';
+
+// Custom dark tooltip for Recharts
+function CustomTooltip({ active, payload, label }) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-surface border border-border rounded-lg p-3 shadow-xl text-xs font-mono">
+        <p className="font-semibold text-text mb-1">{label}</p>
+        {payload.map((entry, index) => (
+          <p key={`item-${index}`} style={{ color: entry.color }} className="flex items-center gap-2">
+            <span>{entry.name}:</span>
+            <span className="font-bold text-text">
+              {entry.value != null ? entry.value : 'N/A'}
+            </span>
+            <span>{entry.unit || ''}</span>
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+}
+
+export default function Dashboard() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchDashboardData = async () => {
+    try {
+      setError(null);
+      const res = await api.get('/dashboard/overview');
+      setData(res.data);
+    } catch (err) {
+      console.error('Failed to load dashboard overview:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to load dashboard');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchDashboardData();
+  };
+
+  const handleMarkRead = async (alertId) => {
+    try {
+      await api.patch(`/alerts/${alertId}/read`);
+      // Update local state
+      setData(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          recentAlerts: (prev.recentAlerts || []).map(a => 
+            a.id === alertId ? { ...a, is_read: true } : a
+          )
+        };
+      });
+    } catch (err) {
+      console.error('Failed to mark alert as read:', err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Energy Overview" subtitle="Loading energy facts..." />
+        <LoadingState message="Fetching deterministic telemetry and analytics..." rows={4} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Energy Overview" subtitle="Telemetry Status" />
+        <ErrorState 
+          title="Telemetry Connection Error" 
+          message={error} 
+          onRetry={fetchDashboardData} 
+        />
+      </div>
+    );
+  }
+
+  const { metrics, devices, automations, recentAlerts, household } = data || {};
+
+  // 1. Format monthly data for chart safely
+  const monthlyChartData = (metrics?.monthlyUsage || []).map(m => {
+    const kwhNum = typeof m.total_kwh === 'number' && !Number.isNaN(m.total_kwh) ? m.total_kwh : null;
+    const costNum = typeof m.total_cost_usd === 'number' && !Number.isNaN(m.total_cost_usd) ? m.total_cost_usd : null;
+    const monthLabel = m.month_name 
+      ? m.month_name.slice(0, 3) 
+      : (m.month != null ? `M${m.month}` : 'N/A');
+
+    return {
+      month: monthLabel,
+      kwh: kwhNum !== null ? parseFloat(kwhNum.toFixed(1)) : 0,
+      cost: costNum !== null ? parseFloat(costNum.toFixed(2)) : 0,
+      kwhDisplay: formatKwh(kwhNum, 1),
+      costDisplay: formatCurrency(costNum)
+    };
+  });
+
+  // 2. Appliance share colors matching DESIGN.md
+  // HVAC #10B981, Dishwasher #38BDF8, Washer/Dryer #A78BFA, Robot vacuum #F59E0B
+  const applianceColors = {
+    'HVAC': '#10B981',
+    'HVAC System': '#10B981',
+    'Dishwasher': '#38BDF8',
+    'Washer/Dryer': '#A78BFA',
+    'Washer / Dryer': '#A78BFA',
+    'Robot Vacuum': '#F59E0B',
+    'Unmonitored / Base': '#64748B'
+  };
+
+  // 3. Format appliance distribution safely
+  const appliancePieData = (metrics?.applianceShares || [])
+    .filter(a => {
+      const name = a.name || a.appliance || '';
+      return name !== 'Unmonitored / Base';
+    })
+    .map(a => {
+      const name = a.name || a.appliance || 'Unknown Appliance';
+      const rawPct = typeof a.percentage === 'number' 
+        ? a.percentage 
+        : (typeof a.share_percent === 'number' ? a.share_percent : null);
+      const rawKwh = typeof a.total_kwh === 'number' 
+        ? a.total_kwh 
+        : (typeof a.kwh === 'number' ? a.kwh : null);
+
+      const isValidPct = rawPct !== null && !Number.isNaN(rawPct);
+      const isValidKwh = rawKwh !== null && !Number.isNaN(rawKwh);
+
+      return {
+        name,
+        value: isValidPct ? parseFloat(rawPct.toFixed(2)) : 0,
+        pctDisplay: isValidPct ? `${rawPct.toFixed(2)}%` : 'N/A',
+        kwh: isValidKwh ? rawKwh : null,
+        kwhDisplay: isValidKwh ? `${rawKwh.toFixed(1)} kWh` : 'N/A',
+        color: applianceColors[name] || '#10B981'
+      };
+    });
+
+  // 4. Tariff calculations
+  const peakTariff = metrics?.tariffSummary?.find(t => t.period === 'Peak');
+  const offPeakTariff = metrics?.tariffSummary?.find(t => t.period === 'Off-Peak');
+
+  const peakKwhNum = typeof peakTariff?.total_kwh === 'number' && !Number.isNaN(peakTariff.total_kwh)
+    ? peakTariff.total_kwh
+    : null;
+  const offPeakKwhNum = typeof offPeakTariff?.total_kwh === 'number' && !Number.isNaN(offPeakTariff.total_kwh)
+    ? offPeakTariff.total_kwh
+    : null;
+  const totalKwhNum = typeof metrics?.totalEnergyKwh === 'number' && !Number.isNaN(metrics.totalEnergyKwh)
+    ? metrics.totalEnergyKwh
+    : null;
+
+  const peakCostDisplay = typeof peakTariff?.total_cost_usd === 'number'
+    ? formatCurrency(peakTariff.total_cost_usd)
+    : 'N/A';
+  const offPeakCostDisplay = typeof offPeakTariff?.total_cost_usd === 'number'
+    ? formatCurrency(offPeakTariff.total_cost_usd)
+    : 'N/A';
+
+  const peakDemandPct = (peakKwhNum !== null && totalKwhNum !== null && totalKwhNum > 0)
+    ? `${((peakKwhNum / totalKwhNum) * 100).toFixed(1)}%`
+    : 'N/A';
+
+  const peakDemandUnit = peakKwhNum !== null 
+    ? `(${peakKwhNum.toFixed(1)} kWh)` 
+    : '(N/A)';
+
+  const totalEnergyDisplay = totalKwhNum !== null
+    ? totalKwhNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : 'N/A';
+
+  const totalCostDisplay = typeof metrics?.totalCostUsd === 'number' && !Number.isNaN(metrics.totalCostUsd)
+    ? `$${metrics.totalCostUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : 'N/A';
+
+  const peakPeriodKwhDisplay = peakKwhNum !== null ? `${peakKwhNum.toFixed(1)} kWh` : 'N/A';
+  const peakPeriodCostDisplay = typeof peakTariff?.total_cost_usd === 'number' && !Number.isNaN(peakTariff.total_cost_usd)
+    ? `$${peakTariff.total_cost_usd.toFixed(2)}`
+    : 'N/A';
+  const peakPeriodShareDisplay = (peakKwhNum !== null && totalKwhNum !== null && totalKwhNum > 0)
+    ? `(${((peakKwhNum / totalKwhNum) * 100).toFixed(1)}%)`
+    : '';
+
+  const offPeakPeriodKwhDisplay = offPeakKwhNum !== null ? `${offPeakKwhNum.toFixed(1)} kWh` : 'N/A';
+  const offPeakPeriodCostDisplay = typeof offPeakTariff?.total_cost_usd === 'number' && !Number.isNaN(offPeakTariff.total_cost_usd)
+    ? `$${offPeakTariff.total_cost_usd.toFixed(2)}`
+    : 'N/A';
+  const offPeakPeriodShareDisplay = (offPeakKwhNum !== null && totalKwhNum !== null && totalKwhNum > 0)
+    ? `(${((offPeakKwhNum / totalKwhNum) * 100).toFixed(1)}%)`
+    : '';
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-300">
+      {/* Header */}
+      <PageHeader
+        title="Energy Overview"
+        subtitle={`Deterministic consumption intelligence for household ${household?.id || 'HOME-JAMES-001'}`}
+        badge={<Badge variant="Measured" tooltip="Aggregated from 5,832 verified IoT sensor readings" />}
+        actions={
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-border text-xs font-mono font-medium text-text border border-border transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-primary' : ''}`} />
+            <span>{refreshing ? 'Refreshing...' : 'Refresh Telemetry'}</span>
+          </button>
+        }
+      />
+
+      {/* Primary KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Total Consumption"
+          value={totalEnergyDisplay}
+          unit={totalKwhNum !== null ? "kWh" : ""}
+          subtitle="5,832 hourly intervals recorded"
+          icon={Zap}
+          badge="Measured"
+          accent="primary"
+        />
+
+        <StatCard
+          title="Total Billed Cost"
+          value={totalCostDisplay}
+          subtitle={`Peak: ${peakCostDisplay} | Off-Peak: ${offPeakCostDisplay}`}
+          icon={DollarSign}
+          badge="Measured"
+          accent="info"
+        />
+
+        <StatCard
+          title="Peak Tariff Demand"
+          value={peakDemandPct}
+          unit={peakDemandUnit}
+          subtitle="Hours: 06:00-09:00 & 17:00-21:00"
+          icon={Flame}
+          badge="Measured"
+          accent="warning"
+        />
+
+        <StatCard
+          title="Efficiency Score"
+          value={metrics?.efficiencyScore?.score != null ? `${metrics.efficiencyScore.score} / 100` : 'N/A'}
+          unit={metrics?.efficiencyScore?.grade || ''}
+          subtitle={metrics?.efficiencyScore?.formula || '100 - (Peak_Tariff_Energy_Pct * 0.4)'}
+          badge="Estimated"
+          badgeTooltip="Formula: 100 - (Peak_Tariff_Energy_Pct * 0.4). Not a direct sensor reading."
+          icon={ShieldCheck}
+          accent="primary"
+        />
+      </div>
+
+      {/* Visual Analytics Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Monthly Trend Chart */}
+        <div className="lg:col-span-8">
+          <ChartCard
+            title="Monthly Energy Consumption & Cost"
+            subtitle="Verified historical trend over 8 observation months"
+            badge="Measured"
+            summaryText="Consumption peaked in October 2024 at 473.19 kWh ($64.29) and reached minimum in May 2025 at 317.77 kWh ($43.14)."
+          >
+            <div className="h-64 w-full pt-4">
+              {monthlyChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlyChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#26323A" vertical={false} />
+                    <XAxis 
+                      dataKey="month" 
+                      stroke="#8FA1A8" 
+                      fontSize={11} 
+                      tickLine={false}
+                      fontFamily="monospace"
+                    />
+                    <YAxis 
+                      stroke="#8FA1A8" 
+                      fontSize={11} 
+                      tickLine={false}
+                      fontFamily="monospace"
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="kwh" name="Energy" unit=" kWh" fill="#10B981" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <EmptyState title="No Monthly Telemetry" description="Monthly aggregated readings are not yet available." />
+              )}
+            </div>
+          </ChartCard>
+        </div>
+
+        {/* Appliance Share Chart */}
+        <div className="lg:col-span-4">
+          <ChartCard
+            title="Appliance Share Breakdown"
+            subtitle="Measured proportion of metered appliances"
+            badge="Measured"
+            summaryText="HVAC dominates domestic electricity usage at 91.83% (3,064.67 kWh), followed by Dishwasher at 5.69% (189.87 kWh)."
+          >
+            <div className="h-44 w-full flex items-center justify-center">
+              {appliancePieData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={appliancePieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={45}
+                      outerRadius={65}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {appliancePieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <EmptyState title="No Appliance Telemetry" description="Appliance breakdown data is unavailable." />
+              )}
+            </div>
+
+            {/* Custom Legend */}
+            <div className="space-y-1.5 mt-2 border-t border-border/50 pt-3">
+              {appliancePieData.map(item => (
+                <div key={item.name} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span className="text-muted">{item.name}</span>
+                  </div>
+                  <div className="font-mono flex items-center gap-2">
+                    <span className="text-text font-semibold">{item.pctDisplay}</span>
+                    <span className="text-muted/70 text-[10px]">({item.kwhDisplay})</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ChartCard>
+        </div>
+      </div>
+
+      {/* Telemetry Status & Recent Alerts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Sub-Panel: System Telemetry & Automations Status */}
+        <div className="lg:col-span-5 space-y-4">
+          <div className="bg-surface border border-border rounded-card p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-text flex items-center gap-2">
+                <Layers className="w-4 h-4 text-primary" />
+                <span>Monitored Smart Devices</span>
+              </h3>
+              <Badge variant="Measured" label={`${devices?.total || 4} Devices`} />
+            </div>
+
+            <div className="divide-y divide-border/40 text-xs">
+              {(devices?.list || []).map(device => (
+                <div key={device.id} className="py-2.5 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-text">{device.name || device.device_name || 'Smart Device'}</p>
+                    <p className="text-[11px] text-muted font-mono capitalize">{(device.type || device.device_type || 'appliance').replace(/_/g, ' ')}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-primary" />
+                    <span className="font-mono text-muted capitalize text-[11px]">{device.status || 'Active'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-surface border border-border rounded-card p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-text flex items-center gap-2">
+                <Clock className="w-4 h-4 text-warning" />
+                <span>Tariff Period Split</span>
+              </h3>
+              <Badge variant="Measured" />
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="p-3 bg-surface-2 rounded-lg border border-border/60">
+                <p className="text-muted text-[11px] font-medium uppercase tracking-wider">Peak Period</p>
+                <p className="text-base font-bold font-mono text-text mt-1">{peakPeriodKwhDisplay}</p>
+                <p className="text-xs font-mono text-warning mt-0.5">{peakPeriodCostDisplay} {peakPeriodShareDisplay}</p>
+                <p className="text-[10px] text-muted font-mono mt-1">$0.1878/kWh avg</p>
+              </div>
+              <div className="p-3 bg-surface-2 rounded-lg border border-border/60">
+                <p className="text-muted text-[11px] font-medium uppercase tracking-wider">Off-Peak Period</p>
+                <p className="text-base font-bold font-mono text-text mt-1">{offPeakPeriodKwhDisplay}</p>
+                <p className="text-xs font-mono text-primary mt-0.5">{offPeakPeriodCostDisplay} {offPeakPeriodShareDisplay}</p>
+                <p className="text-[10px] text-muted font-mono mt-1">$0.1000/kWh flat</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sub-Panel: Live / Recent Event Alerts */}
+        <div className="lg:col-span-7">
+          <div className="bg-surface border border-border rounded-card p-5 shadow-sm h-full flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-text flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-warning" />
+                    <span>Recent Energy Alerts</span>
+                  </h3>
+                  <Badge variant="Measured" />
+                </div>
+                <a
+                  href="/alerts"
+                  className="text-xs font-medium text-primary hover:text-primary-soft flex items-center gap-1 transition-colors"
+                >
+                  <span>Alert Center</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
+
+              {recentAlerts && recentAlerts.length > 0 ? (
+                <div className="space-y-3">
+                  {recentAlerts.slice(0, 2).map(alert => (
+                    <AlertCard key={alert.id} alert={alert} onMarkRead={handleMarkRead} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  title="No Active Alerts"
+                  description="All metered appliances are currently operating within nominal energy envelopes."
+                />
+              )}
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs text-muted">
+              <span>Automations: <strong className="text-text font-mono">{automations?.activeCount || 0} active</strong>, <strong className="text-warning font-mono">{automations?.pendingCount || 0} pending</strong></span>
+              <a href="/automations" className="text-primary hover:underline">Manage Automations →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

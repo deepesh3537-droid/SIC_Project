@@ -14,6 +14,19 @@ import AutomationCenter from '../pages/app/AutomationCenter.jsx';
 import Alerts from '../pages/app/Alerts.jsx';
 import Simulator from '../pages/app/Simulator.jsx';
 import EnergyCoach from '../pages/app/EnergyCoach.jsx';
+import SmartDevices from '../pages/app/SmartDevices.jsx';
+import LifestyleInsights from '../pages/app/LifestyleInsights.jsx';
+import BudgetPlanner from '../pages/app/BudgetPlanner.jsx';
+import LoadManagement from '../pages/app/LoadManagement.jsx';
+import ReportsInsights from '../pages/app/ReportsInsights.jsx';
+import ApplianceHealth from '../pages/app/ApplianceHealth.jsx';
+import EnergyAnomalies from '../pages/app/EnergyAnomalies.jsx';
+import SmartScheduling from '../pages/app/SmartScheduling.jsx';
+import SustainabilityCenter from '../pages/app/SustainabilityCenter.jsx';
+import RuleBuilder from '../pages/app/RuleBuilder.jsx';
+import AutomationHistory from '../pages/app/AutomationHistory.jsx';
+import SettingsView from '../pages/app/Settings.jsx';
+import ProfileView from '../pages/app/Profile.jsx';
 
 // Placeholder view for upcoming modules (Phase 5 & 6)
 import PageHeader from '../components/layout/PageHeader.jsx';
@@ -62,24 +75,37 @@ export default function App() {
             <Route path="alerts" element={<Alerts />} />
             <Route path="simulator" element={<Simulator />} />
 
-            {/* Upcoming Phase 5 & 6 Module Stubs */}
-            <Route path="lifestyle" element={<ModulePlaceholder title="Lifestyle Insights" phase="Phase 6 (P1)" />} />
-            <Route path="devices" element={<ModulePlaceholder title="Smart Devices" phase="Phase 6 (P1)" />} />
-            <Route path="health" element={<ModulePlaceholder title="Appliance Health" phase="Phase 6 (P2)" />} />
-            <Route path="anomalies" element={<ModulePlaceholder title="Energy Anomalies" phase="Phase 6 (P2)" />} />
-            <Route path="rule-builder" element={<ModulePlaceholder title="Rule Builder" phase="Phase 6 (P2)" />} />
-            <Route path="scheduling" element={<ModulePlaceholder title="Smart Scheduling" phase="Phase 6 (P2)" />} />
-            <Route path="automation-history" element={<ModulePlaceholder title="Automation History" phase="Phase 6 (P2)" />} />
+            {/* Core Modules */}
+            <Route path="lifestyle" element={<LifestyleInsights />} />
+            <Route path="devices" element={<SmartDevices />} />
+            <Route path="health" element={<ApplianceHealth />} />
+            <Route path="anomalies" element={<EnergyAnomalies />} />
+            <Route path="rule-builder" element={<RuleBuilder />} />
+            <Route path="scheduling" element={<SmartScheduling />} />
+            <Route path="automation-history" element={<AutomationHistory />} />
             <Route path="coach" element={<EnergyCoach />} />
-            <Route path="budget" element={<ModulePlaceholder title="Budget Planner" phase="Phase 6 (P1)" />} />
-            <Route path="load" element={<ModulePlaceholder title="Load Management" phase="Phase 6 (P1)" />} />
-            <Route path="sustainability" element={<ModulePlaceholder title="Sustainability Center" phase="Phase 6 (P2)" />} />
-            <Route path="reports" element={<ModulePlaceholder title="Reports & Insights" phase="Phase 6 (P1)" />} />
-            <Route path="settings" element={<ModulePlaceholder title="Settings" phase="Phase 6 (P2)" />} />
-            <Route path="profile" element={<ModulePlaceholder title="Profile" phase="Phase 6 (P2)" />} />
+            <Route path="budget" element={<BudgetPlanner />} />
+            <Route path="load" element={<LoadManagement />} />
+            <Route path="sustainability" element={<SustainabilityCenter />} />
+            <Route path="reports" element={<ReportsInsights />} />
+            <Route path="settings" element={<SettingsView />} />
+            <Route path="profile" element={<ProfileView />} />
           </Route>
 
           {/* Fallback & Aliases */}
+          <Route path="/settings" element={<Navigate to="/app/settings" replace />} />
+          <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
+          <Route path="/automation-history" element={<Navigate to="/app/automation-history" replace />} />
+          <Route path="/rule-builder" element={<Navigate to="/app/rule-builder" replace />} />
+          <Route path="/sustainability" element={<Navigate to="/app/sustainability" replace />} />
+          <Route path="/scheduling" element={<Navigate to="/app/scheduling" replace />} />
+          <Route path="/health" element={<Navigate to="/app/health" replace />} />
+          <Route path="/anomalies" element={<Navigate to="/app/anomalies" replace />} />
+          <Route path="/reports" element={<Navigate to="/app/reports" replace />} />
+          <Route path="/budget" element={<Navigate to="/app/budget" replace />} />
+          <Route path="/load" element={<Navigate to="/app/load" replace />} />
+          <Route path="/lifestyle" element={<Navigate to="/app/lifestyle" replace />} />
+          <Route path="/devices" element={<Navigate to="/app/devices" replace />} />
           <Route path="/dashboard" element={<Navigate to="/app" replace />} />
           <Route path="/automations" element={<Navigate to="/app/automations" replace />} />
           <Route path="/alerts" element={<Navigate to="/app/alerts" replace />} />

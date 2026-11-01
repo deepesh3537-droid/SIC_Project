@@ -11,25 +11,78 @@ import {
   ShieldAlert,
   Flame,
   Moon,
-  Wind
+  Wind,
+  SlidersHorizontal,
+  TrendingDown,
+  DollarSign,
+  Leaf,
+  Layers,
+  Info,
+  Zap,
+  ArrowRight
 } from 'lucide-react';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  Legend
+} from 'recharts';
 import api from '../../services/api.js';
 import PageHeader from '../../components/layout/PageHeader.jsx';
+import StatCard from '../../components/cards/StatCard.jsx';
+import ChartCard from '../../components/cards/ChartCard.jsx';
 import AlertCard from '../../components/cards/AlertCard.jsx';
 import Badge from '../../components/ui/Badge.jsx';
 import LoadingState from '../../components/ui/LoadingState.jsx';
-import ErrorState from '../../components/ui/ErrorState.jsx';
-import EmptyState from '../../components/ui/EmptyState.jsx';
+import { formatCurrency, formatKwh, formatNumber } from '../../lib/utils.js';
 
 export default function Simulator() {
+  const [activeTab, setActiveTab] = useState('what_if'); // 'what_if' | 'replay'
+
+  // --- What-if Scenario Modeler State ---
+  const [hvacDelta, setHvacDelta] = useState(1.5);
+  const [shiftDishwasher, setShiftDishwasher] = useState(true);
+  const [shiftLaundry, setShiftLaundry] = useState(true);
+  const [generalConservation, setGeneralConservation] = useState(5);
+  const [carbonFactor, setCarbonFactor] = useState(0.385);
+  const [simResults, setSimResults] = useState(null);
+  const [simLoading, setSimLoading] = useState(false);
+
+  // --- Event Replay State ---
   const [selectedRow, setSelectedRow] = useState(6);
   const [replaying, setReplaying] = useState(false);
   const [replayResult, setReplayResult] = useState(null);
   const [testResults, setTestResults] = useState(null);
   const [latestSimulatedAlert, setLatestSimulatedAlert] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [autoPoll, setAutoPoll] = useState(true);
+
+  // Run What-If calculation
+  const calculateWhatIf = async () => {
+    try {
+      setSimLoading(true);
+      const res = await api.post('/simulator/what-if', {
+        hvacSetpointDelta: parseFloat(hvacDelta),
+        shiftDishwasherToOffPeak: shiftDishwasher,
+        shiftLaundryToOffPeak: shiftLaundry,
+        generalReductionPercent: parseFloat(generalConservation),
+        carbonFactor: parseFloat(carbonFactor)
+      });
+      setSimResults(res.data);
+    } catch (err) {
+      console.error('Failed to run what-if simulation:', err);
+    } finally {
+      setSimLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    calculateWhatIf();
+  }, [hvacDelta, shiftDishwasher, shiftLaundry, generalConservation, carbonFactor]);
 
   // Fetch test set metadata
   const fetchMetadata = async () => {
@@ -65,12 +118,12 @@ export default function Simulator() {
 
   // Polling loop for live pipeline updates
   useEffect(() => {
-    if (!autoPoll) return;
+    if (!autoPoll || activeTab !== 'replay') return;
     const interval = setInterval(() => {
       fetchLatestAlert();
     }, 3000);
     return () => clearInterval(interval);
-  }, [autoPoll]);
+  }, [autoPoll, activeTab]);
 
   const handleReplay = async (rowIndex) => {
     const idx = typeof rowIndex === 'number' ? rowIndex : selectedRow;
@@ -83,9 +136,7 @@ export default function Simulator() {
         rowIndex: idx,
         dataset: 'test'
       });
-
       setReplayResult(res.data);
-      // Immediately pull alerts
       await fetchLatestAlert();
     } catch (err) {
       console.error('Replay execution failed:', err);
@@ -98,13 +149,12 @@ export default function Simulator() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Replay Studio" subtitle="Initializing event stream simulator..." />
-        <LoadingState message="Loading test set evaluations and Redis stream status..." rows={3} />
+        <PageHeader title="Simulator" subtitle="Initializing scenario engine and telemetry stream..." />
+        <LoadingState message="Loading simulation model and test sets..." rows={3} />
       </div>
     );
   }
 
-  // Pre-configured SIC test triggers
   const quickTriggers = [
     {
       row: 6,
@@ -118,206 +168,362 @@ export default function Simulator() {
       row: 21,
       rule: 'R2',
       title: 'Night Heating (Row 21)',
-      desc: '03:00 | Heat Mode | Outdoor: 12.8°C > 10°C',
+      desc: '02:00 | Cold Night: 14.8°C | HVAC: 0.95 kWh',
       icon: Moon,
       color: 'text-rule-r2 border-rule-r2/40 hover:bg-rule-r2/10'
     },
     {
       row: 19,
       rule: 'R3',
-      title: 'Free Cooling (Row 19)',
-      desc: '11:00 | Cool Mode | Outdoor: 20.3°C ≤ 21.6°C',
+      title: 'Morning Pre-Heat (Row 19)',
+      desc: '07:00 | Morning Warmup | HVAC: 1.10 kWh',
       icon: Wind,
       color: 'text-rule-r3 border-rule-r3/40 hover:bg-rule-r3/10'
     },
     {
       row: 0,
       rule: 'None',
-      title: 'Nominal Baseline (Row 0)',
-      desc: '00:00 | Off-Peak | All within normal bounds',
-      icon: Activity,
+      title: 'Normal Baseline (Row 0)',
+      desc: '12:00 | Off-Peak | HVAC: 0.15 kWh (Standby)',
+      icon: CheckCircle2,
       color: 'text-muted border-border hover:bg-surface-2'
     }
   ];
 
+  const comparisonData = simResults ? [
+    {
+      metric: 'Energy (kWh/yr)',
+      Baseline: simResults.baseline.annualKwh,
+      Projected: simResults.projected.annualKwh
+    },
+    {
+      metric: 'Cost ($/yr)',
+      Baseline: simResults.baseline.annualCostUsd,
+      Projected: simResults.projected.annualCostUsd
+    },
+    {
+      metric: 'Carbon (kg CO2e)',
+      Baseline: simResults.baseline.annualCarbonKg,
+      Projected: simResults.projected.annualCarbonKg
+    }
+  ] : [];
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
-      {/* Header */}
+    <div className="space-y-6">
+      {/* Page Header */}
       <PageHeader
-        title="Event Stream Simulator & Replay"
-        subtitle="Inject simulated test readings into Redis Streams (iot.reading.received) and observe live actuations"
-        badge={<Badge variant="Simulated" tooltip="All readings generated here are flagged is_simulated: true" />}
-        actions={
-          <div className="flex items-center gap-3">
+        title="Energy Simulator & What-if Modeler"
+        subtitle="Simulate usage reduction and tariff shifting, project carbon impacts, and test live IoT event streams"
+        badge={<Badge variant="Estimated" label="Mathematical Projection" />}
+        action={
+          <div className="flex items-center gap-1.5 bg-surface-2 p-1 rounded-lg border border-border text-xs">
             <button
-              onClick={() => setAutoPoll(!autoPoll)}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono font-medium border transition-colors ${
-                autoPoll
-                  ? 'bg-primary/10 text-primary border-primary/30'
-                  : 'bg-surface-2 text-muted border-border'
+              onClick={() => setActiveTab('what_if')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                activeTab === 'what_if' ? 'bg-primary text-black font-semibold shadow-sm' : 'text-muted hover:text-text'
               }`}
             >
-              <Radio className={`w-3.5 h-3.5 ${autoPoll ? 'animate-pulse text-primary' : ''}`} />
-              <span>{autoPoll ? 'Live Polling Active (3s)' : 'Polling Paused'}</span>
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              What-If Modeler
+            </button>
+            <button
+              onClick={() => setActiveTab('replay')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                activeTab === 'replay' ? 'bg-primary text-black font-semibold shadow-sm' : 'text-muted hover:text-text'
+              }`}
+            >
+              <Radio className="w-3.5 h-3.5" />
+              IoT Stream Replay
             </button>
           </div>
         }
       />
 
-      {/* Warning & Transparency Notice */}
-      <div className="bg-surface border border-info/30 rounded-card p-4 flex items-start gap-3">
-        <Activity className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
-        <div className="text-xs space-y-1">
-          <p className="font-semibold text-text flex items-center gap-2">
-            <span>Isolated Event Pipeline Guarantee</span>
-            <Badge variant="Simulated" />
-          </p>
-          <p className="text-muted leading-relaxed">
-            Replayed readings are tagged with <code className="text-text bg-surface-2 px-1 py-0.5 rounded font-mono">is_simulated: true</code> throughout the message broker, rule engine, and alerts database. They verify end-to-end reactivity without contaminating verified historical telemetry.
-          </p>
-        </div>
-      </div>
-
-      {/* Main Grid: Control Panel & Live Output */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Replay Controls */}
-        <div className="lg:col-span-6 space-y-5">
-          {/* Quick Triggers */}
-          <div className="bg-surface border border-border rounded-card p-5 shadow-sm space-y-4">
-            <h3 className="text-sm font-semibold text-text flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span>Recommended SIC Verification Scenarios</span>
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {quickTriggers.map(t => {
-                const Icon = t.icon;
-                const isSelected = selectedRow === t.row;
-                return (
-                  <button
-                    key={t.row}
-                    onClick={() => handleReplay(t.row)}
-                    disabled={replaying}
-                    className={`p-3 rounded-lg border text-left transition-all flex flex-col justify-between ${t.color} ${
-                      isSelected ? 'ring-2 ring-primary bg-surface-2' : 'bg-surface-2/60'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-semibold text-xs text-text flex items-center gap-1.5">
-                          <Icon className="w-3.5 h-3.5" />
-                          {t.title}
-                        </span>
-                        <Badge variant="Simulated" />
-                      </div>
-                      <p className="text-[11px] text-muted font-mono leading-tight">{t.desc}</p>
-                    </div>
-
-                    <div className="mt-3 flex items-center justify-between text-[11px] font-mono text-primary font-semibold">
-                      <span>Trigger Replay</span>
-                      <Play className="w-3 h-3 fill-current" />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Manual Index Selector */}
-          <div className="bg-surface border border-border rounded-card p-5 shadow-sm space-y-4">
-            <h3 className="text-sm font-semibold text-text flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-muted" />
-              <span>Manual Row Selector (0 – 29)</span>
-            </h3>
-
-            <div className="flex items-center gap-4">
-              <input
-                type="range"
-                min="0"
-                max="29"
-                value={selectedRow}
-                onChange={(e) => setSelectedRow(parseInt(e.target.value, 10))}
-                className="flex-1 accent-primary cursor-pointer"
+      {/* --- TAB 1: WHAT-IF SCENARIO MODELER --- */}
+      {activeTab === 'what_if' && (
+        <div className="space-y-6">
+          {/* KPI Projection Cards */}
+          {simResults && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <StatCard
+                title="Projected Cost Reduction"
+                value={`$${simResults.savings.annualCostSavedUsd}/yr`}
+                subvalue={`${simResults.savings.percentCostReduction}% reduction vs $${simResults.baseline.annualCostUsd} baseline`}
+                icon={DollarSign}
+                badge={<Badge variant="Estimated" label="Annual Savings" />}
               />
-              <span className="font-mono text-base font-bold text-primary w-12 text-center bg-surface-2 py-1 px-2 rounded border border-border">
-                #{selectedRow}
-              </span>
+              <StatCard
+                title="Projected Energy Savings"
+                value={`${simResults.savings.annualKwhSaved} kWh/yr`}
+                subvalue={`From ${simResults.baseline.annualKwh} down to ${simResults.projected.annualKwh} kWh`}
+                icon={Zap}
+                badge={<Badge variant="Estimated" label="Conservation" />}
+              />
+              <StatCard
+                title="Avoided Carbon Footprint"
+                value={`${simResults.savings.annualCarbonSavedKg} kg CO₂e`}
+                subvalue={`~${Math.round(simResults.savings.annualCarbonSavedKg / 21)} mature trees planted equivalent`}
+                icon={Leaf}
+                badge={<Badge variant="Assumption" label="ADR-012 Factor" />}
+              />
+            </div>
+          )}
+
+          {/* Scenario Controls & Visual Comparison Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Control Panel */}
+            <div className="bg-surface border border-border rounded-xl p-5 space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-text text-sm">Interactive What-If Scenario Levers</h3>
+                  <p className="text-xs text-muted">Adjust sliders to model shifts in behavior, setpoints, and schedules</p>
+                </div>
+                <Badge variant="Estimated" label="Dynamic Model" />
+              </div>
+
+              {/* Lever 1: Thermostat Delta */}
+              <div className="space-y-2 bg-surface-2/40 p-3 rounded-lg border border-border/60">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-text flex items-center gap-1.5">
+                    <Flame className="w-3.5 h-3.5 text-amber-400" />
+                    HVAC Thermostat Setback / Relaxation
+                  </span>
+                  <span className="font-mono font-bold text-primary">{hvacDelta}°C adjustment</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="3"
+                  step="0.5"
+                  value={hvacDelta}
+                  onChange={(e) => setHvacDelta(parseFloat(e.target.value))}
+                  className="w-full accent-primary"
+                />
+                <div className="flex justify-between text-[11px] text-muted">
+                  <span>0°C (Current baseline)</span>
+                  <span>+1.5°C (Recommended)</span>
+                  <span>+3.0°C (Aggressive)</span>
+                </div>
+              </div>
+
+              {/* Lever 2: Shift Dishwasher to Off-Peak */}
+              <div className="flex items-center justify-between bg-surface-2/40 p-3 rounded-lg border border-border/60">
+                <div className="space-y-0.5">
+                  <div className="text-xs font-medium text-text flex items-center gap-1.5">
+                    <Wind className="w-3.5 h-3.5 text-sky-400" />
+                    Shift Dishwasher 100% to Off-Peak
+                  </div>
+                  <div className="text-[11px] text-muted">
+                    Move cycles from 19:00 dinner peak ($0.22/kWh) to 02:00 overnight ($0.10/kWh)
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={shiftDishwasher}
+                  onChange={(e) => setShiftDishwasher(e.target.checked)}
+                  className="w-4 h-4 accent-primary rounded cursor-pointer"
+                />
+              </div>
+
+              {/* Lever 3: Shift Laundry to Off-Peak */}
+              <div className="flex items-center justify-between bg-surface-2/40 p-3 rounded-lg border border-border/60">
+                <div className="space-y-0.5">
+                  <div className="text-xs font-medium text-text flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-purple-400" />
+                    Shift Washer/Dryer 100% to Off-Peak
+                  </div>
+                  <div className="text-[11px] text-muted">
+                    Move 2,200W laundry runs to overnight hours (save 54.5% per cycle)
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={shiftLaundry}
+                  onChange={(e) => setShiftLaundry(e.target.checked)}
+                  className="w-4 h-4 accent-primary rounded cursor-pointer"
+                />
+              </div>
+
+              {/* Lever 4: General Conservation */}
+              <div className="space-y-2 bg-surface-2/40 p-3 rounded-lg border border-border/60">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-text flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                    General Behavioral Conservation
+                  </span>
+                  <span className="font-mono font-bold text-primary">{generalConservation}% reduction</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="25"
+                  step="1"
+                  value={generalConservation}
+                  onChange={(e) => setGeneralConservation(parseFloat(e.target.value))}
+                  className="w-full accent-primary"
+                />
+                <div className="flex justify-between text-[11px] text-muted">
+                  <span>0%</span>
+                  <span>5% (Habit tweaks)</span>
+                  <span>25% (Eco warrior)</span>
+                </div>
+              </div>
             </div>
 
-            <div className="flex items-center justify-between pt-2">
-              <span className="text-xs text-muted font-mono">Dataset: sic_IoT_test.csv</span>
-              <button
-                onClick={() => handleReplay(selectedRow)}
-                disabled={replaying}
-                className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-dark text-bg font-semibold text-xs font-mono transition-colors flex items-center gap-2 disabled:opacity-50"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>{replaying ? 'Injecting into Redis...' : `Replay Test Row #${selectedRow}`}</span>
-              </button>
-            </div>
+            {/* Visual Impact Comparison */}
+            <ChartCard
+              title="Baseline vs. Simulated Outcome"
+              subtitle="Projected annual impact across Energy, Cost, and Carbon footprint"
+              badge={<Badge variant="Estimated" label="Scenario Comparison" />}
+            >
+              <div className="h-64 w-full pt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={comparisonData} margin={{ top: 15, right: 15, left: -10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#22272e" />
+                    <XAxis dataKey="metric" stroke="#6b7280" fontSize={11} />
+                    <YAxis stroke="#6b7280" fontSize={11} />
+                    <Tooltip 
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="bg-surface border border-border p-2.5 rounded-lg shadow-lg text-xs space-y-1">
+                              <div className="font-semibold text-text">{label}</div>
+                              <div className="text-muted">Baseline: <span className="font-mono font-bold text-text">{payload[0].value}</span></div>
+                              <div className="text-muted">Projected: <span className="font-mono font-bold text-emerald-400">{payload[1].value}</span></div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px', color: '#9ca3af' }} />
+                    <Bar dataKey="Baseline" fill="#6b7280" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Projected" fill="#10B981" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
           </div>
 
-          {/* Execution Pipeline Status */}
-          {replayResult && (
-            <div className="bg-surface border border-primary/40 rounded-card p-4 shadow-sm space-y-2 animate-in fade-in">
-              <div className="flex items-center justify-between text-xs font-semibold text-primary">
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Replay Executed Successfully
-                </span>
-                <span className="font-mono text-muted">{replayResult.replayData?.message_id}</span>
+          {/* Mathematical Assumptions Box */}
+          {simResults && (
+            <div className="bg-surface border border-border rounded-xl p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Info className="w-4 h-4 text-primary" />
+                  <h4 className="font-semibold text-xs text-text">Transparent Modeling Assumptions (ADR-012)</h4>
+                </div>
+                <Badge variant="Assumption" label="Estimates != Measured" />
               </div>
-              <p className="text-xs text-muted font-mono">
-                Published to <strong className="text-text">iot.reading.received</strong> → Evaluated by Analytics Consumer → Alert Consumer generated {replayResult.alertsProcessed || 0} alert(s).
-              </p>
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-muted">
+                {simResults.assumptions.map((assump, idx) => (
+                  <li key={idx} className="flex items-start gap-2 bg-surface-2/40 p-2.5 rounded-lg border border-border/40">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                    <span>{assump}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
+      )}
 
-        {/* Right Column: Live Stream Output */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className="bg-surface border border-border rounded-card p-5 shadow-sm h-full flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-text flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-warning" />
-                  <span>Latest Simulated Actuation / Alert</span>
-                </h3>
-                <Badge variant="Simulated" label="Live Stream Event" />
+      {/* --- TAB 2: IOT EVENT STREAM REPLAY --- */}
+      {activeTab === 'replay' && (
+        <div className="space-y-6">
+          {/* Quick Triggers Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {quickTriggers.map((t) => {
+              const Icon = t.icon;
+              return (
+                <button
+                  key={t.row}
+                  onClick={() => handleReplay(t.row)}
+                  disabled={replaying}
+                  className={`p-4 rounded-xl border bg-surface transition-all text-left flex flex-col justify-between space-y-3 ${t.color}`}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-surface-2 border border-border">
+                      {t.rule}
+                    </span>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-sm text-text">{t.title}</h4>
+                    <p className="text-xs text-muted mt-1 font-mono">{t.desc}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-primary font-medium pt-2 border-t border-border/50">
+                    <Play className="w-3 h-3 fill-current" />
+                    Inject Test Event
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Replay Studio & Live Telemetry Inspector */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 bg-surface border border-border rounded-xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-text text-sm">Manual Test Dataset Slider</h3>
+                  <p className="text-xs text-muted">Replay any row from the 30-row evaluation dataset into Redis Streams</p>
+                </div>
+                <Badge variant="Simulated" label="Synthetic Replay" />
+              </div>
+
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted">Target Dataset Row:</span>
+                  <span className="font-mono font-bold text-primary">Row {selectedRow} of 29</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="29"
+                  value={selectedRow}
+                  onChange={(e) => setSelectedRow(parseInt(e.target.value, 10))}
+                  className="w-full accent-primary"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-between">
+                <button
+                  onClick={() => handleReplay(selectedRow)}
+                  disabled={replaying}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-black font-semibold text-xs hover:bg-primary-hover transition-colors disabled:opacity-50"
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  {replaying ? 'Injecting into Redis Stream...' : `Replay Row ${selectedRow}`}
+                </button>
+                <div className="flex items-center gap-2 text-xs text-muted">
+                  <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
+                  Stream: <span className="font-mono text-text">iot.reading.received</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Latest Simulated Alert Card */}
+            <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-text text-sm">Live Alert Output</h3>
+                <Badge variant="Simulated" label="Pipeline Catch" />
               </div>
 
               {latestSimulatedAlert ? (
-                <div className="animate-in fade-in duration-300">
-                  <AlertCard alert={latestSimulatedAlert} />
-                </div>
-              ) : (
-                <EmptyState
-                  icon={Radio}
-                  title="No Simulated Alerts In Session"
-                  description="Click any scenario on the left to inject a simulated reading into the message stream."
+                <AlertCard
+                  alert={latestSimulatedAlert}
+                  onMarkRead={() => fetchLatestAlert()}
                 />
+              ) : (
+                <div className="text-center py-8 text-xs text-muted">
+                  No simulated alerts captured yet. Click any quick trigger to replay an IoT row.
+                </div>
               )}
             </div>
-
-            {testResults?.warnings && testResults.warnings.length > 0 && (
-              <div className="mt-4 pt-3 border-t border-border">
-                <div className="flex items-center gap-2 text-warning text-xs font-semibold mb-2">
-                  <ShieldAlert className="w-4 h-4" />
-                  <span>Dataset Quality Integrity Audit</span>
-                </div>
-                <div className="space-y-1.5 text-[11px] font-mono text-muted">
-                  {testResults.warnings.slice(0, 3).map((w, i) => (
-                    <div key={i} className="p-2 rounded bg-surface-2 border border-border/50">
-                      ⚠️ {w}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
-

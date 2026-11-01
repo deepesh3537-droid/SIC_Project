@@ -8,7 +8,12 @@ import {
   ArrowUpRight, 
   AlertTriangle,
   Layers,
-  Clock
+  Clock,
+  Radio,
+  Calendar,
+  Info,
+  TrendingDown,
+  CheckCircle2
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -28,6 +33,7 @@ import StatCard from '../../components/cards/StatCard.jsx';
 import ChartCard from '../../components/cards/ChartCard.jsx';
 import AlertCard from '../../components/cards/AlertCard.jsx';
 import Badge from '../../components/ui/Badge.jsx';
+import Modal from '../../components/ui/Modal.jsx';
 import LoadingState from '../../components/ui/LoadingState.jsx';
 import ErrorState from '../../components/ui/ErrorState.jsx';
 import EmptyState from '../../components/ui/EmptyState.jsx';
@@ -60,6 +66,14 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Timeframe toggle state for trends (daily / weekly / monthly)
+  const [timeframe, setTimeframe] = useState('monthly');
+  const [trendData, setTrendData] = useState([]);
+  const [trendLoading, setTrendLoading] = useState(false);
+
+  // Efficiency score explanation modal
+  const [scoreModalOpen, setScoreModalOpen] = useState(false);
+
   const fetchDashboardData = async () => {
     try {
       setError(null);
@@ -74,13 +88,30 @@ export default function Dashboard() {
     }
   };
 
+  const fetchTrends = async (selectedTimeframe) => {
+    setTrendLoading(true);
+    try {
+      const res = await api.get(`/dashboard/trends?timeframe=${selectedTimeframe}`);
+      setTrendData(res.data);
+    } catch (err) {
+      console.error('Failed to fetch trend data:', err);
+    } finally {
+      setTrendLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
+  useEffect(() => {
+    fetchTrends(timeframe);
+  }, [timeframe]);
+
   const handleRefresh = () => {
     setRefreshing(true);
     fetchDashboardData();
+    fetchTrends(timeframe);
   };
 
   const handleMarkRead = async (alertId) => {
@@ -104,7 +135,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Energy Overview" subtitle="Loading energy facts..." />
+        <PageHeader title="Energy Command Center" subtitle="Loading telemetry facts..." />
         <LoadingState message="Fetching deterministic telemetry and analytics..." rows={4} />
       </div>
     );
@@ -113,7 +144,7 @@ export default function Dashboard() {
   if (error) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Energy Overview" subtitle="Telemetry Status" />
+        <PageHeader title="Energy Command Center" subtitle="Telemetry Status" />
         <ErrorState 
           title="Telemetry Connection Error" 
           message={error} 
@@ -125,16 +156,22 @@ export default function Dashboard() {
 
   const { metrics, devices, automations, recentAlerts, household } = data || {};
 
-  // 1. Format monthly data for chart safely
-  const monthlyChartData = (metrics?.monthlyUsage || []).map(m => {
-    const kwhNum = typeof m.total_kwh === 'number' && !Number.isNaN(m.total_kwh) ? m.total_kwh : null;
-    const costNum = typeof m.total_cost_usd === 'number' && !Number.isNaN(m.total_cost_usd) ? m.total_cost_usd : null;
-    const monthLabel = m.month_name 
-      ? m.month_name.slice(0, 3) 
-      : (m.month != null ? `M${m.month}` : 'N/A');
+  // 1. Format chart data based on active timeframe
+  const activeChartData = (trendData.length > 0 ? trendData : (metrics?.monthlyUsage || [])).map(item => {
+    const kwhNum = typeof item.total_kwh === 'number' && !Number.isNaN(item.total_kwh) ? item.total_kwh : null;
+    const costNum = typeof item.total_cost_usd === 'number' && !Number.isNaN(item.total_cost_usd) ? item.total_cost_usd : null;
+    
+    let label = 'N/A';
+    if (timeframe === 'monthly') {
+      label = item.month_name ? item.month_name.slice(0, 3) : (item.month != null ? `M${item.month}` : 'N/A');
+    } else if (timeframe === 'weekly') {
+      label = item.week ? item.week.replace('2025-', '') : 'N/A';
+    } else if (timeframe === 'daily') {
+      label = item.date ? item.date.slice(5) : 'N/A';
+    }
 
     return {
-      month: monthLabel,
+      label,
       kwh: kwhNum !== null ? parseFloat(kwhNum.toFixed(1)) : 0,
       cost: costNum !== null ? parseFloat(costNum.toFixed(2)) : 0,
       kwhDisplay: formatKwh(kwhNum, 1),
@@ -143,7 +180,6 @@ export default function Dashboard() {
   });
 
   // 2. Appliance share colors matching DESIGN.md
-  // HVAC #10B981, Dishwasher #38BDF8, Washer/Dryer #A78BFA, Robot vacuum #F59E0B
   const applianceColors = {
     'HVAC': '#10B981',
     'HVAC System': '#10B981',
@@ -239,8 +275,8 @@ export default function Dashboard() {
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* Header */}
       <PageHeader
-        title="Energy Overview"
-        subtitle={`Deterministic consumption intelligence for household ${household?.id || 'HOME-JAMES-001'}`}
+        title="Energy Command Center"
+        subtitle={`Deterministic consumption intelligence & live telemetry for household ${household?.id || 'HOME-JAMES-001'}`}
         badge={<Badge variant="Measured" tooltip="Aggregated from 5,832 verified IoT sensor readings" />}
         actions={
           <button
@@ -253,6 +289,34 @@ export default function Dashboard() {
           </button>
         }
       />
+
+      {/* Simulated Live Feed Pulse Banner */}
+      <div className="bg-surface border border-info/30 rounded-card p-3.5 px-4 flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-info/10 border border-info/20 text-info">
+            <Radio className="w-4 h-4 animate-pulse" />
+          </div>
+          <div className="text-xs">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-text">Simulated IoT Stream Active</span>
+              <Badge variant="Simulated" label="Live Stream" />
+            </div>
+            <p className="text-muted text-[11px] mt-0.5">
+              Listening to Redis Stream <code className="text-text bg-surface-2 px-1 py-0.2 rounded font-mono">iot.reading.received</code>. Telemetry replayed at 1-hour interval frequency.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 text-xs">
+          <a
+            href="/app/simulator"
+            className="px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-border border border-border text-xs font-mono text-primary font-medium flex items-center gap-1.5 transition-colors"
+          >
+            <span>Open Simulator Studio</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </a>
+        </div>
+      </div>
 
       {/* Primary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -285,52 +349,102 @@ export default function Dashboard() {
           accent="warning"
         />
 
-        <StatCard
-          title="Efficiency Score"
-          value={metrics?.efficiencyScore?.score != null ? `${metrics.efficiencyScore.score} / 100` : 'N/A'}
-          unit={metrics?.efficiencyScore?.grade || ''}
-          subtitle={metrics?.efficiencyScore?.formula || '100 - (Peak_Tariff_Energy_Pct * 0.4)'}
-          badge="Estimated"
-          badgeTooltip="Formula: 100 - (Peak_Tariff_Energy_Pct * 0.4). Not a direct sensor reading."
-          icon={ShieldCheck}
-          accent="primary"
-        />
+        {/* Clickable Efficiency Score Card */}
+        <div 
+          onClick={() => setScoreModalOpen(true)}
+          className="cursor-pointer group"
+          title="Click to view transparent formula and calculation breakdown"
+        >
+          <StatCard
+            title="Efficiency Score"
+            value={metrics?.efficiencyScore?.score != null ? `${metrics.efficiencyScore.score} / 100` : 'N/A'}
+            unit={metrics?.efficiencyScore?.grade || ''}
+            subtitle="Click to view transparent formula breakdown"
+            badge="Estimated"
+            badgeTooltip="Formula: 100 - (Peak_Tariff_Energy_Pct * 0.4). Click to inspect."
+            icon={ShieldCheck}
+            accent="primary"
+            className="border-primary/30 group-hover:border-primary/70 transition-all"
+          />
+        </div>
       </div>
 
       {/* Visual Analytics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Monthly Trend Chart */}
+        {/* Energy Trends Chart with Daily/Weekly/Monthly Timeframe Switcher */}
         <div className="lg:col-span-8">
           <ChartCard
-            title="Monthly Energy Consumption & Cost"
-            subtitle="Verified historical trend over 8 observation months"
+            title="Consumption & Cost Trends"
+            subtitle={
+              timeframe === 'monthly'
+                ? 'Historical monthly totals across 8 observation months'
+                : timeframe === 'weekly'
+                ? 'Weekly aggregated energy consumption across 36 weeks'
+                : 'Daily energy trends (last 60 recorded days)'
+            }
             badge="Measured"
-            summaryText="Consumption peaked in October 2024 at 473.19 kWh ($64.29) and reached minimum in May 2025 at 317.77 kWh ($43.14)."
+            actions={
+              <div className="flex items-center gap-1 bg-surface-2 p-1 rounded-lg border border-border text-xs font-mono">
+                <button
+                  onClick={() => setTimeframe('daily')}
+                  className={`px-2.5 py-1 rounded transition-colors ${
+                    timeframe === 'daily' ? 'bg-primary text-bg font-bold' : 'text-muted hover:text-text'
+                  }`}
+                >
+                  Daily
+                </button>
+                <button
+                  onClick={() => setTimeframe('weekly')}
+                  className={`px-2.5 py-1 rounded transition-colors ${
+                    timeframe === 'weekly' ? 'bg-primary text-bg font-bold' : 'text-muted hover:text-text'
+                  }`}
+                >
+                  Weekly
+                </button>
+                <button
+                  onClick={() => setTimeframe('monthly')}
+                  className={`px-2.5 py-1 rounded transition-colors ${
+                    timeframe === 'monthly' ? 'bg-primary text-bg font-bold' : 'text-muted hover:text-text'
+                  }`}
+                >
+                  Monthly
+                </button>
+              </div>
+            }
+            summaryText={
+              timeframe === 'monthly'
+                ? 'Monthly consumption peaked in October 2024 at 473.19 kWh ($64.29) and reached minimum in May 2025 at 317.77 kWh ($43.14).'
+                : timeframe === 'weekly'
+                ? 'Weekly load ranges between ~5 kWh during mild transition weeks to ~248 kWh during intense winter heating.'
+                : 'Daily consumption correlates strongly with ambient temperature; cold winter days draw up to 34 kWh/day.'
+            }
           >
             <div className="h-64 w-full pt-4">
-              {monthlyChartData.length > 0 ? (
+              {trendLoading ? (
+                <LoadingState message="Loading trend series..." type="spinner" />
+              ) : activeChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <BarChart data={activeChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#26323A" vertical={false} />
                     <XAxis 
-                      dataKey="month" 
+                      dataKey="label" 
                       stroke="#8FA1A8" 
-                      fontSize={11} 
+                      fontSize={10} 
                       tickLine={false}
                       fontFamily="monospace"
                     />
                     <YAxis 
                       stroke="#8FA1A8" 
-                      fontSize={11} 
+                      fontSize={10} 
                       tickLine={false}
                       fontFamily="monospace"
                     />
                     <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="kwh" name="Energy" unit=" kWh" fill="#10B981" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="kwh" name="Energy" unit=" kWh" fill="#10B981" radius={[3, 3, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <EmptyState title="No Monthly Telemetry" description="Monthly aggregated readings are not yet available." />
+                <EmptyState title="No Trend Telemetry" description="Trend series are currently unavailable." />
               )}
             </div>
           </ChartCard>
@@ -455,7 +569,7 @@ export default function Dashboard() {
                   <Badge variant="Measured" />
                 </div>
                 <a
-                  href="/alerts"
+                  href="/app/alerts"
                   className="text-xs font-medium text-primary hover:text-primary-soft flex items-center gap-1 transition-colors"
                 >
                   <span>Alert Center</span>
@@ -479,11 +593,72 @@ export default function Dashboard() {
 
             <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs text-muted">
               <span>Automations: <strong className="text-text font-mono">{automations?.activeCount || 0} active</strong>, <strong className="text-warning font-mono">{automations?.pendingCount || 0} pending</strong></span>
-              <a href="/automations" className="text-primary hover:underline">Manage Automations →</a>
+              <a href="/app/automations" className="text-primary hover:underline">Manage Automations →</a>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Transparent Efficiency Score Explanation Modal */}
+      <Modal
+        isOpen={scoreModalOpen}
+        onClose={() => setScoreModalOpen(false)}
+        title="Transparent Efficiency Score Formula"
+        description="Every score is calculated deterministically from verified telemetry. No black-box estimations."
+      >
+        <div className="space-y-4 text-xs font-sans">
+          <div className="p-4 rounded-xl bg-surface-2 border border-border space-y-2">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-muted font-bold">Standard Mathematical Formula</span>
+            <div className="text-base font-mono font-bold text-primary">
+              Score = 100 - (Peak_Tariff_Energy_Pct × 0.4)
+            </div>
+            <p className="text-muted leading-relaxed">
+              Deducts points proportionally based on the percentage of domestic electricity drawn during high-cost Peak Tariff windows (06:00-09:00 & 17:00-21:00).
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="font-semibold text-text">HOME-JAMES-001 Calculation Breakdown:</h4>
+            <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+              <div className="p-2.5 rounded-lg bg-surface-2 border border-border">
+                <span className="text-muted block text-[10px]">TOTAL CONSUMPTION</span>
+                <span className="font-bold text-text">3,337.29 kWh</span>
+              </div>
+              <div className="p-2.5 rounded-lg bg-surface-2 border border-border">
+                <span className="text-muted block text-[10px]">PEAK CONSUMPTION</span>
+                <span className="font-bold text-warning">1,355.39 kWh (40.61%)</span>
+              </div>
+              <div className="p-2.5 rounded-lg bg-surface-2 border border-border">
+                <span className="text-muted block text-[10px]">PEAK PENALTY DEDUCTION</span>
+                <span className="font-bold text-danger">-16.24 points</span>
+              </div>
+              <div className="p-2.5 rounded-lg bg-surface-2 border border-primary/30">
+                <span className="text-muted block text-[10px]">FINAL ESTIMATED SCORE</span>
+                <span className="font-bold text-primary">84 / 100 (Good)</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/20 space-y-1.5">
+            <h5 className="font-semibold text-primary flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>How to Reach a Score of 90+ (Excellent)</span>
+            </h5>
+            <p className="text-muted leading-relaxed">
+              Shifting 10% of peak consumption (approx. 135 kWh) to off-peak hours (e.g. scheduling dishwasher and washing machine after 9:00 PM) lowers peak share to ~36.5%, lifting your efficiency rating to <strong>88 / 100</strong>.
+            </p>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              onClick={() => setScoreModalOpen(false)}
+              className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-dark text-bg font-semibold text-xs transition-colors"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

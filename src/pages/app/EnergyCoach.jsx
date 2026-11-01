@@ -378,13 +378,15 @@ export default function EnergyCoach() {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Ask your Energy Coach (e.g., 'Why did I get an alert?' or 'How can I lower my bill?')..."
+            aria-label="Ask your Energy Coach"
             disabled={loading}
             className="flex-1 bg-surface-2 border border-border focus:border-primary/50 focus:outline-none rounded-xl px-4 py-2.5 text-xs text-text placeholder:text-muted/60 transition-colors"
           />
           <button
             type="submit"
+            aria-label="Send question to Energy Coach"
             disabled={loading || !inputValue.trim()}
-            className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-dark disabled:opacity-50 text-bg font-semibold text-xs transition-colors flex items-center gap-1.5"
+            className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-dark disabled:opacity-50 text-bg font-semibold text-xs transition-colors flex items-center gap-1.5 min-h-[44px]"
           >
             <Send className="w-3.5 h-3.5 fill-current" />
             <span className="hidden sm:inline">Send</span>

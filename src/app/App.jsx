@@ -7,6 +7,7 @@ import AppLayout from '../components/layout/AppLayout.jsx';
 // Auth Pages
 import Login from '../pages/auth/Login.jsx';
 import Register from '../pages/auth/Register.jsx';
+import LandingPage from '../pages/landing/LandingPage.jsx';
 
 // Core App Pages
 import Dashboard from '../pages/app/Dashboard.jsx';
@@ -111,7 +112,7 @@ export default function App() {
           <Route path="/alerts" element={<Navigate to="/app/alerts" replace />} />
           <Route path="/simulator" element={<Navigate to="/app/simulator" replace />} />
           <Route path="/coach" element={<Navigate to="/app/coach" replace />} />
-          <Route path="/" element={<Navigate to="/app" replace />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="*" element={<Navigate to="/app" replace />} />
         </Routes>
       </BrowserRouter>

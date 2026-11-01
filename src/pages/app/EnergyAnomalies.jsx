@@ -89,7 +89,7 @@ export default function EnergyAnomalies() {
       <PageHeader
         title="Energy Anomalies & Pattern Deviations"
         subtitle="Identified statistical deviations beyond 3-sigma thresholds (labelled as unusual, not equipment faults)"
-        badge={<Badge variant="Measured" label="3-Sigma Statistical Bounds" />}
+        badge={<Badge variant="Estimated" label="3-Sigma Bounds" />}
         action={
           <button
             onClick={handleRefresh}
@@ -109,14 +109,14 @@ export default function EnergyAnomalies() {
           value={totalAnomaliesCount}
           subvalue="Exceeding 3σ baseline bounds"
           icon={AlertTriangle}
-          badge={<Badge variant="Measured" label="Statistical" />}
+          badge={<Badge variant="Estimated" label="3σ Filtered" />}
         />
         <StatCard
           title="Elevated Deviations"
           value={severityBreakdown.high || 0}
           subvalue="High demand during peak tariff"
           icon={ShieldAlert}
-          badge={<Badge variant="Measured" label="High Severity" />}
+          badge={<Badge variant="Estimated" label="High Deviation" />}
         />
         <StatCard
           title="Moderate Variances"

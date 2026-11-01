@@ -66,6 +66,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
       {/* Sidebar Container */}
       <aside
+        aria-label="Main Navigation"
         className={cn(
           "fixed top-0 bottom-0 left-0 w-64 bg-surface border-r border-border flex flex-col z-50 transition-transform duration-200 lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
@@ -84,7 +85,11 @@ export default function Sidebar({ isOpen, onClose }) {
               </span>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 text-muted hover:text-text lg:hidden">
+          <button 
+            onClick={onClose} 
+            aria-label="Close navigation sidebar"
+            className="p-2 text-muted hover:text-text rounded-lg hover:bg-surface-2 transition-colors lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>

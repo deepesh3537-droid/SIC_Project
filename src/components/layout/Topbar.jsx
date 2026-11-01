@@ -10,7 +10,8 @@ export default function Topbar({ onMenuClick }) {
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuClick}
-          className="p-2 text-muted hover:text-text rounded-lg bg-surface-2 border border-border lg:hidden"
+          aria-label="Open navigation sidebar"
+          className="p-2.5 text-muted hover:text-text rounded-lg bg-surface-2 border border-border lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center"
         >
           <Menu className="w-5 h-5" />
         </button>

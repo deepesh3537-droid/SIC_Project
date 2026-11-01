@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Zap, 
   DollarSign, 
@@ -13,7 +14,10 @@ import {
   Calendar,
   Info,
   TrendingDown,
-  CheckCircle2
+  CheckCircle2,
+  Cpu,
+  Bot,
+  Wind
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -39,19 +43,21 @@ import ErrorState from '../../components/ui/ErrorState.jsx';
 import EmptyState from '../../components/ui/EmptyState.jsx';
 import { formatCurrency, formatKwh, formatNumber, formatPercent } from '../../lib/utils.js';
 
-// Custom dark tooltip for Recharts
+// Custom dark tooltip for Recharts with cyan branding
 function CustomTooltip({ active, payload, label }) {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-surface border border-border rounded-lg p-3 shadow-xl text-xs font-mono">
-        <p className="font-semibold text-text mb-1">{label}</p>
+      <div className="bg-surface/95 backdrop-blur-md border border-border rounded-lg p-3 shadow-xl text-xs font-mono">
+        <p className="font-semibold text-text mb-1.5 border-b border-border/60 pb-1">{label}</p>
         {payload.map((entry, index) => (
-          <p key={`item-${index}`} style={{ color: entry.color }} className="flex items-center gap-2">
-            <span>{entry.name}:</span>
-            <span className="font-bold text-text">
-              {entry.value != null ? entry.value : 'N/A'}
+          <p key={`item-${index}`} className="flex items-center justify-between gap-3 py-0.5">
+            <span className="flex items-center gap-1.5" style={{ color: entry.color || '#22D3EE' }}>
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color || '#22D3EE' }} />
+              <span>{entry.name}:</span>
             </span>
-            <span>{entry.unit || ''}</span>
+            <span className="font-bold text-text">
+              {entry.value != null ? entry.value : 'N/A'}{entry.unit || ''}
+            </span>
           </p>
         ))}
       </div>
@@ -117,7 +123,6 @@ export default function Dashboard() {
   const handleMarkRead = async (alertId) => {
     try {
       await api.patch(`/alerts/${alertId}/read`);
-      // Update local state
       setData(prev => {
         if (!prev) return prev;
         return {
@@ -179,11 +184,11 @@ export default function Dashboard() {
     };
   });
 
-  // 2. Appliance share colors matching DESIGN.md
+  // 2. Cyber-themed Appliance colors matching tokens.css & DESIGN.md
   const applianceColors = {
-    'HVAC': '#10B981',
-    'HVAC System': '#10B981',
-    'Dishwasher': '#38BDF8',
+    'HVAC': '#22D3EE',
+    'HVAC System': '#22D3EE',
+    'Dishwasher': '#3B82F6',
     'Washer/Dryer': '#A78BFA',
     'Washer / Dryer': '#A78BFA',
     'Robot Vacuum': '#F59E0B',
@@ -214,7 +219,7 @@ export default function Dashboard() {
         pctDisplay: isValidPct ? `${rawPct.toFixed(2)}%` : 'N/A',
         kwh: isValidKwh ? rawKwh : null,
         kwhDisplay: isValidKwh ? `${rawKwh.toFixed(1)} kWh` : 'N/A',
-        color: applianceColors[name] || '#10B981'
+        color: applianceColors[name] || '#22D3EE'
       };
     });
 
@@ -271,29 +276,42 @@ export default function Dashboard() {
     ? `(${((offPeakKwhNum / totalKwhNum) * 100).toFixed(1)}%)`
     : '';
 
+  // Helper for device icons
+  const getDeviceIcon = (type) => {
+    switch (type) {
+      case 'hvac': return Wind;
+      case 'robot_vacuum': return Bot;
+      case 'dishwasher': return Cpu;
+      case 'washer_dryer': return Layers;
+      default: return Cpu;
+    }
+  };
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
-      {/* Header */}
+    <div className="space-y-6 animate-in fade-in duration-300">
+      {/* 1. Header */}
       <PageHeader
         title="Energy Command Center"
         subtitle={`Deterministic consumption intelligence & live telemetry for household ${household?.id || 'HOME-JAMES-001'}`}
         badge={<Badge variant="Measured" tooltip="Aggregated from 5,832 verified IoT sensor readings" />}
         actions={
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-border text-xs font-mono font-medium text-text border border-border transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-primary' : ''}`} />
-            <span>{refreshing ? 'Refreshing...' : 'Refresh Telemetry'}</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-surface border border-border text-xs font-mono font-medium text-text transition-all hover:border-primary/40 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-primary' : 'text-primary'}`} />
+              <span>{refreshing ? 'Refreshing...' : 'Refresh Telemetry'}</span>
+            </button>
+          </div>
         }
       />
 
-      {/* Simulated Live Feed Pulse Banner */}
-      <div className="bg-surface border border-info/30 rounded-card p-3.5 px-4 flex items-center justify-between flex-wrap gap-3">
+      {/* 2. Simulated Live Feed Pulse Banner */}
+      <div className="bg-surface border border-primary/25 rounded-card p-3.5 px-4 flex items-center justify-between flex-wrap gap-3 shadow-[0_0_20px_rgba(34,211,238,0.04)]">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-info/10 border border-info/20 text-info">
+          <div className="p-2 rounded-lg bg-primary/10 border border-primary/20 text-primary">
             <Radio className="w-4 h-4 animate-pulse" />
           </div>
           <div className="text-xs">
@@ -302,23 +320,23 @@ export default function Dashboard() {
               <Badge variant="Simulated" label="Live Stream" />
             </div>
             <p className="text-muted text-[11px] mt-0.5">
-              Listening to Redis Stream <code className="text-text bg-surface-2 px-1 py-0.2 rounded font-mono">iot.reading.received</code>. Telemetry replayed at 1-hour interval frequency.
+              Listening to Redis Stream <code className="text-primary bg-surface-2 px-1 py-0.5 rounded font-mono text-[10px]">iot.reading.received</code>. Telemetry replayed at 1-hour interval frequency.
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <a
-            href="/app/simulator"
-            className="px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-border border border-border text-xs font-mono text-primary font-medium flex items-center gap-1.5 transition-colors"
+          <Link
+            to="/app/simulator"
+            className="px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-surface border border-border text-xs font-mono text-primary font-medium flex items-center gap-1.5 transition-colors hover:border-primary/40"
           >
             <span>Open Simulator Studio</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
-          </a>
+          </Link>
         </div>
       </div>
 
-      {/* Primary KPI Cards */}
+      {/* 3. Primary KPI Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Consumption"
@@ -364,12 +382,12 @@ export default function Dashboard() {
             badgeTooltip="Formula: 100 - (Peak_Tariff_Energy_Pct * 0.4). Click to inspect."
             icon={ShieldCheck}
             accent="primary"
-            className="border-primary/30 group-hover:border-primary/70 transition-all"
+            className="border-primary/30 group-hover:border-primary/70 transition-all hover:shadow-[0_0_20px_rgba(34,211,238,0.1)]"
           />
         </div>
       </div>
 
-      {/* Visual Analytics Grid */}
+      {/* 4. Visual Analytics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Energy Trends Chart with Daily/Weekly/Monthly Timeframe Switcher */}
         <div className="lg:col-span-8">
@@ -388,7 +406,7 @@ export default function Dashboard() {
                 <button
                   onClick={() => setTimeframe('daily')}
                   className={`px-2.5 py-1 rounded transition-colors ${
-                    timeframe === 'daily' ? 'bg-primary text-bg font-bold' : 'text-muted hover:text-text'
+                    timeframe === 'daily' ? 'bg-primary text-black font-bold shadow-[0_0_10px_rgba(34,211,238,0.2)]' : 'text-muted hover:text-text'
                   }`}
                 >
                   Daily
@@ -396,7 +414,7 @@ export default function Dashboard() {
                 <button
                   onClick={() => setTimeframe('weekly')}
                   className={`px-2.5 py-1 rounded transition-colors ${
-                    timeframe === 'weekly' ? 'bg-primary text-bg font-bold' : 'text-muted hover:text-text'
+                    timeframe === 'weekly' ? 'bg-primary text-black font-bold shadow-[0_0_10px_rgba(34,211,238,0.2)]' : 'text-muted hover:text-text'
                   }`}
                 >
                   Weekly
@@ -404,7 +422,7 @@ export default function Dashboard() {
                 <button
                   onClick={() => setTimeframe('monthly')}
                   className={`px-2.5 py-1 rounded transition-colors ${
-                    timeframe === 'monthly' ? 'bg-primary text-bg font-bold' : 'text-muted hover:text-text'
+                    timeframe === 'monthly' ? 'bg-primary text-black font-bold shadow-[0_0_10px_rgba(34,211,238,0.2)]' : 'text-muted hover:text-text'
                   }`}
                 >
                   Monthly
@@ -425,7 +443,7 @@ export default function Dashboard() {
               ) : activeChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={activeChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#26323A" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1F334D" vertical={false} />
                     <XAxis 
                       dataKey="label" 
                       stroke="#8FA1A8" 
@@ -440,7 +458,7 @@ export default function Dashboard() {
                       fontFamily="monospace"
                     />
                     <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="kwh" name="Energy" unit=" kWh" fill="#10B981" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="kwh" name="Energy" unit=" kWh" fill="#22D3EE" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -502,55 +520,80 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Telemetry Status & Recent Alerts Section */}
+      {/* 5. Telemetry Status & Recent Alerts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Sub-Panel: System Telemetry & Automations Status */}
+        {/* Sub-Panel: Monitored Smart Devices & Tariff Period Split */}
         <div className="lg:col-span-5 space-y-4">
+          {/* Monitored Smart Devices */}
           <div className="bg-surface border border-border rounded-card p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-text flex items-center gap-2">
-                <Layers className="w-4 h-4 text-primary" />
-                <span>Monitored Smart Devices</span>
-              </h3>
-              <Badge variant="Measured" label={`${devices?.total || 4} Devices`} />
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-text flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-primary" />
+                  <span>Monitored Smart Devices</span>
+                </h3>
+                <Badge variant="Measured" label={`${devices?.total || 4} Devices`} />
+              </div>
+              <Link 
+                to="/app/devices" 
+                className="text-xs text-primary hover:underline flex items-center gap-1 font-mono"
+              >
+                <span>View All</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </Link>
             </div>
 
             <div className="divide-y divide-border/40 text-xs">
-              {(devices?.list || []).map(device => (
-                <div key={device.id} className="py-2.5 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-text">{device.name || device.device_name || 'Smart Device'}</p>
-                    <p className="text-[11px] text-muted font-mono capitalize">{(device.type || device.device_type || 'appliance').replace(/_/g, ' ')}</p>
+              {(devices?.list || []).map(device => {
+                const IconComponent = getDeviceIcon(device.type || device.device_type);
+                const powerVal = device.power_rating_watts ? `${parseFloat(device.power_rating_watts)}W` : null;
+                const isRunning = device.status === 'running';
+
+                return (
+                  <div key={device.id} className="py-2.5 flex items-center justify-between group">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 rounded-lg bg-surface-2 border border-border text-primary group-hover:border-primary/40 transition-colors">
+                        <IconComponent className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-text">{device.name || device.device_name || 'Smart Device'}</p>
+                        <p className="text-[11px] text-muted font-mono capitalize">
+                          {(device.type || device.device_type || 'appliance').replace(/_/g, ' ')}
+                          {powerVal && ` • ${powerVal}`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${isRunning ? 'bg-primary animate-pulse' : 'bg-muted/60'}`} />
+                      <span className="font-mono text-muted capitalize text-[11px]">{device.status || 'Active'}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-primary" />
-                    <span className="font-mono text-muted capitalize text-[11px]">{device.status || 'Active'}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
+          {/* Tariff Period Split */}
           <div className="bg-surface border border-border rounded-card p-5 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-text flex items-center gap-2">
                 <Clock className="w-4 h-4 text-warning" />
-                <span>Tariff Period Split</span>
+                <span>Tariff Period Economics</span>
               </h3>
-              <Badge variant="Measured" />
+              <Badge variant="Measured" label="2 Tariff Periods" />
             </div>
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 bg-surface-2 rounded-lg border border-border/60">
+              <div className="p-3 bg-surface-2 rounded-lg border border-border/60 space-y-1">
                 <p className="text-muted text-[11px] font-medium uppercase tracking-wider">Peak Period</p>
-                <p className="text-base font-bold font-mono text-text mt-1">{peakPeriodKwhDisplay}</p>
-                <p className="text-xs font-mono text-warning mt-0.5">{peakPeriodCostDisplay} {peakPeriodShareDisplay}</p>
-                <p className="text-[10px] text-muted font-mono mt-1">$0.1878/kWh avg</p>
+                <p className="text-base font-bold font-mono text-text">{peakPeriodKwhDisplay}</p>
+                <p className="text-xs font-mono text-warning">{peakPeriodCostDisplay} {peakPeriodShareDisplay}</p>
+                <p className="text-[10px] text-muted font-mono pt-1 border-t border-border/40">$0.1878/kWh avg</p>
               </div>
-              <div className="p-3 bg-surface-2 rounded-lg border border-border/60">
+              <div className="p-3 bg-surface-2 rounded-lg border border-border/60 space-y-1">
                 <p className="text-muted text-[11px] font-medium uppercase tracking-wider">Off-Peak Period</p>
-                <p className="text-base font-bold font-mono text-text mt-1">{offPeakPeriodKwhDisplay}</p>
-                <p className="text-xs font-mono text-primary mt-0.5">{offPeakPeriodCostDisplay} {offPeakPeriodShareDisplay}</p>
-                <p className="text-[10px] text-muted font-mono mt-1">$0.1000/kWh flat</p>
+                <p className="text-base font-bold font-mono text-text">{offPeakPeriodKwhDisplay}</p>
+                <p className="text-xs font-mono text-primary">{offPeakPeriodCostDisplay} {offPeakPeriodShareDisplay}</p>
+                <p className="text-[10px] text-muted font-mono pt-1 border-t border-border/40">$0.1000/kWh flat (54.5% cheaper)</p>
               </div>
             </div>
           </div>
@@ -568,13 +611,13 @@ export default function Dashboard() {
                   </h3>
                   <Badge variant="Measured" />
                 </div>
-                <a
-                  href="/app/alerts"
-                  className="text-xs font-medium text-primary hover:text-primary-soft flex items-center gap-1 transition-colors"
+                <Link
+                  to="/app/alerts"
+                  className="text-xs font-medium text-primary hover:text-primary-hover flex items-center gap-1 transition-colors"
                 >
                   <span>Alert Center</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
-                </a>
+                </Link>
               </div>
 
               {recentAlerts && recentAlerts.length > 0 ? (
@@ -591,15 +634,20 @@ export default function Dashboard() {
               )}
             </div>
 
-            <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs text-muted">
-              <span>Automations: <strong className="text-text font-mono">{automations?.activeCount || 0} active</strong>, <strong className="text-warning font-mono">{automations?.pendingCount || 0} pending</strong></span>
-              <a href="/app/automations" className="text-primary hover:underline">Manage Automations →</a>
+            <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs text-muted flex-wrap gap-2">
+              <span>
+                Automations: <strong className="text-text font-mono">{automations?.activeCount || 0} active</strong>, <strong className="text-warning font-mono">{automations?.pendingCount || 0} pending</strong>
+              </span>
+              <Link to="/app/automations" className="text-primary hover:underline flex items-center gap-1">
+                <span>Manage Automations</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </Link>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Transparent Efficiency Score Explanation Modal */}
+      {/* 6. Transparent Efficiency Score Explanation Modal */}
       <Modal
         isOpen={scoreModalOpen}
         onClose={() => setScoreModalOpen(false)}
@@ -652,7 +700,7 @@ export default function Dashboard() {
           <div className="flex justify-end pt-2">
             <button
               onClick={() => setScoreModalOpen(false)}
-              className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-dark text-bg font-semibold text-xs transition-colors"
+              className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-black font-semibold text-xs transition-colors"
             >
               Got it
             </button>

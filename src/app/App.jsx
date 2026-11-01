@@ -9,7 +9,7 @@ import Login from '../pages/auth/Login.jsx';
 import Register from '../pages/auth/Register.jsx';
 import LandingPage from '../pages/landing/LandingPage.jsx';
 
-// Core App Pages
+// Core App Pages (All 18 Functional Modules)
 import Dashboard from '../pages/app/Dashboard.jsx';
 import AutomationCenter from '../pages/app/AutomationCenter.jsx';
 import Alerts from '../pages/app/Alerts.jsx';
@@ -28,29 +28,7 @@ import RuleBuilder from '../pages/app/RuleBuilder.jsx';
 import AutomationHistory from '../pages/app/AutomationHistory.jsx';
 import SettingsView from '../pages/app/Settings.jsx';
 import ProfileView from '../pages/app/Profile.jsx';
-
-// Placeholder view for upcoming modules (Phase 5 & 6)
-import PageHeader from '../components/layout/PageHeader.jsx';
-import EmptyState from '../components/ui/EmptyState.jsx';
-import Badge from '../components/ui/Badge.jsx';
-import { Layers } from 'lucide-react';
-
-function ModulePlaceholder({ title, phase = 'Phase 6' }) {
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title={title}
-        subtitle="Intelligent energy management module"
-        badge={<Badge variant="Assumption" label={phase} />}
-      />
-      <EmptyState
-        icon={Layers}
-        title={`${title} Ready for Activation`}
-        description={`This module is scheduled for implementation during ${phase} according to PRD specification.`}
-      />
-    </div>
-  );
-}
+import ExploreModules from '../pages/app/ExploreModules.jsx';
 
 export default function App() {
   return (
@@ -72,6 +50,7 @@ export default function App() {
           >
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="explore" element={<ExploreModules />} />
             <Route path="automations" element={<AutomationCenter />} />
             <Route path="alerts" element={<Alerts />} />
             <Route path="simulator" element={<Simulator />} />
@@ -93,7 +72,8 @@ export default function App() {
             <Route path="profile" element={<ProfileView />} />
           </Route>
 
-          {/* Fallback & Aliases */}
+          {/* Direct URL Fallbacks & Unprefixed Aliases */}
+          <Route path="/explore" element={<Navigate to="/app/explore" replace />} />
           <Route path="/settings" element={<Navigate to="/app/settings" replace />} />
           <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
           <Route path="/automation-history" element={<Navigate to="/app/automation-history" replace />} />
@@ -112,11 +92,14 @@ export default function App() {
           <Route path="/alerts" element={<Navigate to="/app/alerts" replace />} />
           <Route path="/simulator" element={<Navigate to="/app/simulator" replace />} />
           <Route path="/coach" element={<Navigate to="/app/coach" replace />} />
+          
+          {/* Public Landing Page */}
           <Route path="/" element={<LandingPage />} />
+          
+          {/* 404 Catch-All */}
           <Route path="*" element={<Navigate to="/app" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
   );
 }
-

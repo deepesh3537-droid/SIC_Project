@@ -175,7 +175,7 @@ export default function EnergyCoach() {
       {/* Page Header */}
       <PageHeader
         title="AI Energy Coach"
-        subtitle="Conversational energy intelligence grounded in verified household telemetry"
+        subtitle="Conversational energy intelligence grounded in verified household telemetry with prompt injection defense"
         badge={
           isLlmActive ? (
             <Badge variant="Simulated" label={`Ollama LLM (${coachStatus?.ollama?.modelConfigured || 'Local'})`} />
@@ -184,33 +184,31 @@ export default function EnergyCoach() {
           )
         }
         actions={
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleWeeklySummary}
-              disabled={loading}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-border text-xs font-mono font-medium text-text border border-border transition-colors disabled:opacity-50"
-            >
-              <Calendar className="w-3.5 h-3.5 text-primary" />
-              <span>Weekly Summary</span>
-            </button>
-          </div>
+          <button
+            onClick={handleWeeklySummary}
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-surface border border-border text-xs font-mono font-medium text-text hover:border-primary/40 transition-colors disabled:opacity-50"
+          >
+            <Calendar className="w-3.5 h-3.5 text-primary" />
+            <span>Weekly Summary</span>
+          </button>
         }
       />
 
       {/* Engine Status Banner */}
-      <div className="bg-surface border border-border rounded-card p-4 flex items-center justify-between flex-wrap gap-3">
+      <div className="bg-surface border border-border rounded-card p-4 flex items-center justify-between flex-wrap gap-3 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-lg border ${
+          <div className={`p-2 rounded-xl border ${
             isLlmActive 
-              ? 'bg-info/10 text-info border-info/30' 
-              : 'bg-primary/10 text-primary border-primary/30'
+              ? 'bg-secondary/10 text-secondary border-secondary/30' 
+              : 'bg-primary/10 text-primary border-primary/30 shadow-[0_0_12px_rgba(34,211,238,0.15)]'
           }`}>
             <Bot className="w-5 h-5" />
           </div>
           <div className="text-xs">
             <p className="font-semibold text-text flex items-center gap-2">
               <span>Active Engine: {isLlmActive ? `Local LLM (${coachStatus?.ollama?.modelConfigured})` : 'Deterministic Fact & Rule Engine'}</span>
-              <span className={`w-2 h-2 rounded-full ${isLlmActive ? 'bg-info animate-pulse' : 'bg-primary'}`} />
+              <span className={`w-2 h-2 rounded-full ${isLlmActive ? 'bg-secondary animate-pulse' : 'bg-primary animate-pulse'}`} />
             </p>
             <p className="text-muted text-[11px] mt-0.5">
               {isLlmActive
@@ -220,7 +218,7 @@ export default function EnergyCoach() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-[11px] font-mono text-muted bg-surface-2 px-3 py-1.5 rounded-lg border border-border">
+        <div className="flex items-center gap-2 text-[11px] font-mono text-muted bg-surface-2 px-3 py-1.5 rounded-xl border border-border">
           <ShieldCheck className="w-3.5 h-3.5 text-primary" />
           <span>Evidence First Principle Enforced</span>
         </div>
@@ -228,8 +226,8 @@ export default function EnergyCoach() {
 
       {/* Recommended Prompt Chips */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-        <span className="text-muted text-[11px] font-medium flex-shrink-0 flex items-center gap-1 mr-1">
-          <Sparkles className="w-3.5 h-3.5 text-primary" /> Suggestions:
+        <span className="text-muted text-[11px] font-medium shrink-0 flex items-center gap-1 mr-1 font-mono">
+          <Sparkles className="w-3.5 h-3.5 text-primary" /> Prompts:
         </span>
         {starterChips.map((chip, idx) => {
           const Icon = chip.icon;
@@ -238,7 +236,7 @@ export default function EnergyCoach() {
               key={idx}
               onClick={() => handleSendMessage(chip.query)}
               disabled={loading}
-              className="px-3 py-1.5 rounded-lg bg-surface border border-border hover:border-primary/40 hover:bg-surface-2 text-text transition-colors flex items-center gap-1.5 whitespace-nowrap flex-shrink-0"
+              className="px-3 py-1.5 rounded-lg bg-surface border border-border hover:border-primary/40 hover:bg-surface-2 text-text transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 text-xs shadow-sm"
             >
               <Icon className="w-3 h-3 text-primary" />
               <span>{chip.label}</span>
@@ -248,9 +246,9 @@ export default function EnergyCoach() {
       </div>
 
       {/* Main Chat Stream Container */}
-      <div className="bg-surface border border-border rounded-card p-5 shadow-sm min-h-[460px] flex flex-col justify-between">
+      <div className="bg-surface border border-border rounded-card p-5 shadow-sm min-h-[480px] flex flex-col justify-between">
         {/* Messages Stream */}
-        <div className="space-y-5 overflow-y-auto max-h-[560px] pr-2">
+        <div className="space-y-5 overflow-y-auto max-h-[580px] pr-2 scrollbar-thin">
           {messages.map(msg => (
             <div
               key={msg.id}
@@ -260,7 +258,7 @@ export default function EnergyCoach() {
               <div
                 className={`max-w-2xl rounded-2xl p-4 text-xs leading-relaxed ${
                   msg.sender === 'user'
-                    ? 'bg-primary text-bg font-medium rounded-tr-none'
+                    ? 'bg-primary text-black font-semibold rounded-tr-none shadow-[0_0_15px_rgba(34,211,238,0.2)]'
                     : 'bg-surface-2 border border-border text-text rounded-tl-none shadow-sm space-y-3'
                 }`}
               >
@@ -271,7 +269,7 @@ export default function EnergyCoach() {
                       <Bot className="w-3.5 h-3.5 text-primary" />
                       <span className="font-bold text-text">WattWise Coach</span>
                       <span className="text-muted">
-                        ({msg.source === 'ollama' ? 'Local LLM' : 'Deterministic Fallback'})
+                        ({msg.source === 'ollama' ? 'Local LLM' : 'Deterministic Ground Truth'})
                       </span>
                     </div>
                     {msg.timestamp && <span className="text-muted">{msg.timestamp}</span>}
@@ -293,10 +291,10 @@ export default function EnergyCoach() {
                       {msg.factsUsed.map((f, i) => (
                         <span
                           key={i}
-                          className="px-2 py-0.5 rounded bg-surface border border-border/80 text-[10px] font-mono text-muted flex items-center gap-1.5"
+                          className="px-2 py-0.5 rounded bg-surface border border-border text-[10px] font-mono text-muted flex items-center gap-1.5"
                         >
                           <span className="text-text font-medium">{f.metric}:</span>
-                          <span className="text-primary">{f.value}</span>
+                          <span className="text-primary font-bold">{f.value}</span>
                           <Badge variant={f.type || 'Measured'} className="text-[9px] py-0 px-1" />
                         </span>
                       ))}
@@ -308,12 +306,12 @@ export default function EnergyCoach() {
                 {msg.actionableSteps && msg.actionableSteps.length > 0 && (
                   <div className="pt-2 border-t border-border/60">
                     <p className="text-[10px] font-mono uppercase tracking-wider text-primary font-semibold mb-1">
-                      Recommended Steps:
+                      Recommended Next Actions:
                     </p>
                     <ul className="space-y-1 text-muted text-xs">
                       {msg.actionableSteps.map((step, i) => (
                         <li key={i} className="flex items-start gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-primary flex-shrink-0 mt-0.5" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
                           <span>{step}</span>
                         </li>
                       ))}
@@ -325,7 +323,7 @@ export default function EnergyCoach() {
                 {msg.suggestedQuestions && msg.suggestedQuestions.length > 0 && (
                   <div className="pt-2 border-t border-border/60">
                     <p className="text-[10px] font-mono uppercase tracking-wider text-muted font-semibold mb-1.5">
-                      Follow-up Questions:
+                      Suggested Follow-up:
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {msg.suggestedQuestions.map((sq, i) => (
@@ -333,9 +331,9 @@ export default function EnergyCoach() {
                           key={i}
                           onClick={() => handleSendMessage(sq)}
                           disabled={loading}
-                          className="px-2.5 py-1 rounded-md bg-surface hover:bg-border border border-border text-[11px] text-primary hover:text-primary-soft transition-colors text-left"
+                          className="px-2.5 py-1 rounded-md bg-surface hover:bg-surface-2 border border-border hover:border-primary/40 text-[11px] text-primary transition-colors text-left font-mono"
                         >
-                          → {sq}
+                          &rarr; {sq}
                         </button>
                       ))}
                     </div>
@@ -345,7 +343,7 @@ export default function EnergyCoach() {
                 {/* Source & Disclaimer Footer */}
                 {msg.disclaimer && (
                   <p className="text-[10px] font-mono text-muted/70 italic pt-1">
-                    ℹ️ {msg.disclaimer}
+                    &bull; {msg.disclaimer}
                   </p>
                 )}
               </div>
@@ -355,9 +353,9 @@ export default function EnergyCoach() {
           {/* Loading Bubble */}
           {loading && (
             <div className="flex items-start">
-              <div className="bg-surface-2 border border-border rounded-2xl rounded-tl-none p-4 text-xs flex items-center gap-2 text-muted">
+              <div className="bg-surface-2 border border-border rounded-2xl rounded-tl-none p-4 text-xs flex items-center gap-2 text-muted shadow-sm">
                 <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                <span className="font-mono">Analyzing deterministic telemetry facts...</span>
+                <span className="font-mono">Grounding response in deterministic telemetry facts...</span>
               </div>
             </div>
           )}
@@ -380,13 +378,13 @@ export default function EnergyCoach() {
             placeholder="Ask your Energy Coach (e.g., 'Why did I get an alert?' or 'How can I lower my bill?')..."
             aria-label="Ask your Energy Coach"
             disabled={loading}
-            className="flex-1 bg-surface-2 border border-border focus:border-primary/50 focus:outline-none rounded-xl px-4 py-2.5 text-xs text-text placeholder:text-muted/60 transition-colors"
+            className="flex-1 bg-surface-2 border border-border focus:border-primary focus:ring-1 focus:ring-primary/30 focus:outline-none rounded-xl px-4 py-2.5 text-xs text-text placeholder:text-muted/60 transition-colors"
           />
           <button
             type="submit"
             aria-label="Send question to Energy Coach"
             disabled={loading || !inputValue.trim()}
-            className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-dark disabled:opacity-50 text-bg font-semibold text-xs transition-colors flex items-center gap-1.5 min-h-[44px]"
+            className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover disabled:opacity-50 text-black font-semibold text-xs transition-colors flex items-center gap-1.5 min-h-[44px] shadow-[0_0_12px_rgba(34,211,238,0.25)]"
           >
             <Send className="w-3.5 h-3.5 fill-current" />
             <span className="hidden sm:inline">Send</span>
@@ -396,4 +394,3 @@ export default function EnergyCoach() {
     </div>
   );
 }
-

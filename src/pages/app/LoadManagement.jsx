@@ -90,80 +90,84 @@ export default function LoadManagement() {
     loadSheddingAdvice = []
   } = data || {};
 
-  const capacityColors = ['#10B981', '#A78BFA', '#38BDF8', '#F59E0B'];
+  const capacityColors = ['#22D3EE', '#3B82F6', '#A78BFA', '#F59E0B'];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-300">
       {/* Page Header */}
       <PageHeader
         title="Load Management & Peak Demand"
         subtitle="Electrical circuit capacity, concurrent appliance spikes, and peak shaving intelligence"
         badge={<Badge variant="Measured" label="Deterministic Telemetry" />}
-        action={
+        actions={
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface border border-border text-xs font-medium text-text hover:bg-surface-2 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-surface border border-border text-xs font-mono font-medium text-text hover:border-primary/40 transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh Telemetry
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-primary' : 'text-primary'}`} />
+            <span>{refreshing ? 'Refreshing...' : 'Refresh Telemetry'}</span>
           </button>
         }
       />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Recorded Peak Demand"
           value={`${formatNumber(peakDemand.maxDemandKw, 3)} kW`}
-          subvalue={peakDemand.maxDemandTimestamp || '2025-02-05 17:00'}
+          subtitle={peakDemand.maxDemandTimestamp || '2025-02-05 17:00'}
           icon={Gauge}
-          badge={<Badge variant="Measured" label="Historical Peak" />}
+          badge="Measured"
+          accent="primary"
         />
         <StatCard
           title="Connected Circuit Load"
           value={`${formatNumber(peakDemand.totalConnectedKw, 3)} kW`}
-          subvalue="7,555W across 4 monitored devices"
+          subtitle="7,555W across 4 monitored devices"
           icon={Zap}
-          badge={<Badge variant="Measured" label="Total Capacity" />}
+          badge="Measured"
+          accent="info"
         />
         <StatCard
           title="Coincidence Factor"
           value={formatNumber(peakDemand.coincidenceFactor, 3)}
-          subvalue="81.5% max simultaneous utilization"
+          subtitle="81.5% max simultaneous utilization"
           icon={Activity}
-          badge={<Badge variant="Measured" label="Coincidence" />}
+          badge="Measured"
+          accent="warning"
         />
         <StatCard
           title="Critical Concurrency Hours"
           value="6 hrs"
-          subvalue="HVAC + Dishwasher + Laundry combined"
+          subtitle="HVAC + Dishwasher + Laundry combined"
           icon={AlertTriangle}
-          badge={<Badge variant="Measured" label="Triple-load spike" />}
+          badge="Measured"
+          accent="danger"
         />
       </div>
 
       {/* Grid: Connected Capacity Breakdown & Tariff Period Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Connected Capacity Breakdown */}
-        <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
+        <div className="bg-surface border border-border rounded-card p-5 space-y-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-text text-sm">Monitored Circuit Power Ratings</h3>
-              <p className="text-xs text-muted">Connected electrical draw by appliance category</p>
+              <p className="text-xs text-muted font-mono">Connected electrical draw by appliance category</p>
             </div>
             <Badge variant="Measured" label="7,555 W Total" />
           </div>
 
           <div className="space-y-3 pt-2">
             {connectedAppliances.map((app, idx) => (
-              <div key={app.name} className="space-y-1.5 bg-surface-2/40 p-3 rounded-lg border border-border/60">
+              <div key={app.name} className="space-y-1.5 bg-surface-2 p-3 rounded-xl border border-border/60">
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    {app.type === 'hvac' && <Flame className="w-4 h-4 text-emerald-400" />}
-                    {app.type === 'washer_dryer' && <Zap className="w-4 h-4 text-purple-400" />}
-                    {app.type === 'dishwasher' && <Wind className="w-4 h-4 text-sky-400" />}
-                    {app.type === 'robot_vacuum' && <Bot className="w-4 h-4 text-amber-400" />}
+                    {app.type === 'hvac' && <Flame className="w-4 h-4 text-primary" />}
+                    {app.type === 'washer_dryer' && <Layers className="w-4 h-4 text-purple-400" />}
+                    {app.type === 'dishwasher' && <Wind className="w-4 h-4 text-secondary" />}
+                    {app.type === 'robot_vacuum' && <Bot className="w-4 h-4 text-warning" />}
                     <span className="font-medium text-text">{app.name}</span>
                   </div>
                   <div className="flex items-center gap-3">
@@ -172,9 +176,9 @@ export default function LoadManagement() {
                   </div>
                 </div>
 
-                <div className="w-full h-2 bg-surface rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-surface rounded-full overflow-hidden border border-border/40">
                   <div 
-                    className="h-full rounded-full transition-all duration-500"
+                    className="h-full rounded-full transition-all duration-500 shadow-sm"
                     style={{ 
                       width: `${app.shareOfConnectedCapacity}%`,
                       backgroundColor: capacityColors[idx % capacityColors.length]
@@ -187,11 +191,11 @@ export default function LoadManagement() {
         </div>
 
         {/* Tariff Load Distribution */}
-        <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
+        <div className="bg-surface border border-border rounded-card p-5 space-y-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-text text-sm">Tariff Period Load Distribution</h3>
-              <p className="text-xs text-muted">Energy consumption and billing impact across tariff tiers</p>
+              <p className="text-xs text-muted font-mono">Energy consumption and billing impact across tariff tiers</p>
             </div>
             <Badge variant="Measured" label="Tariff Tiers" />
           </div>
@@ -200,35 +204,35 @@ export default function LoadManagement() {
             <div className="bg-surface-2 p-4 rounded-xl border border-border space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-text">Peak Tariff</span>
-                <span className="text-xs font-mono font-bold text-rose-400">$0.22/kWh</span>
+                <span className="text-xs font-mono font-bold text-danger">$0.22/kWh</span>
               </div>
               <div className="text-2xl font-bold font-mono text-text">
                 {formatKwh(loadDistribution.peakPeriodKwh)}
               </div>
-              <div className="text-xs text-muted flex justify-between">
-                <span>Cost: <strong className="text-text font-mono">{formatCurrency(loadDistribution.peakPeriodCostUsd)}</strong></span>
-                <span className="font-mono font-semibold text-rose-400">{loadDistribution.peakPeriodPercent}%</span>
+              <div className="text-xs text-muted flex justify-between font-mono">
+                <span>Cost: <strong className="text-text">{formatCurrency(loadDistribution.peakPeriodCostUsd)}</strong></span>
+                <span className="font-semibold text-danger">{loadDistribution.peakPeriodPercent}%</span>
               </div>
             </div>
 
             <div className="bg-surface-2 p-4 rounded-xl border border-border space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-text">Off-Peak Tariff</span>
-                <span className="text-xs font-mono font-bold text-emerald-400">$0.10/kWh</span>
+                <span className="text-xs font-mono font-bold text-primary">$0.10/kWh</span>
               </div>
               <div className="text-2xl font-bold font-mono text-text">
                 {formatKwh(loadDistribution.offPeakPeriodKwh)}
               </div>
-              <div className="text-xs text-muted flex justify-between">
-                <span>Cost: <strong className="text-text font-mono">{formatCurrency(loadDistribution.offPeakPeriodCostUsd)}</strong></span>
-                <span className="font-mono font-semibold text-emerald-400">{loadDistribution.offPeakPeriodPercent}%</span>
+              <div className="text-xs text-muted flex justify-between font-mono">
+                <span>Cost: <strong className="text-text">{formatCurrency(loadDistribution.offPeakPeriodCostUsd)}</strong></span>
+                <span className="font-semibold text-primary">{loadDistribution.offPeakPeriodPercent}%</span>
               </div>
             </div>
           </div>
 
-          <div className="p-3 bg-surface-2/60 rounded-lg border border-border text-xs text-muted space-y-1">
+          <div className="p-3.5 bg-surface-2 rounded-xl border border-border text-xs text-muted space-y-1">
             <div className="font-medium text-text">Peak Shaving Opportunity</div>
-            <p>
+            <p className="leading-relaxed">
               Although Peak hours account for only <strong className="text-text font-mono">40.56%</strong> of total volume, they generate <strong className="text-text font-mono">60.0%</strong> of the total energy expense due to the 2.2x tariff rate penalty.
             </p>
           </div>
@@ -236,52 +240,41 @@ export default function LoadManagement() {
       </div>
 
       {/* Simultaneous Usage Matrix Table */}
-      <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
+      <div className="bg-surface border border-border rounded-card p-5 space-y-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-text text-sm">Concurrent Appliance Operation Events</h3>
-            <p className="text-xs text-muted">Instances where high-draw appliances operated in the same 1-hour interval</p>
+            <h3 className="font-semibold text-text text-sm">Concurrent Appliance Concurrency Matrix</h3>
+            <p className="text-xs text-muted font-mono">Simultaneous operational duty cycles identified in historical telemetry</p>
           </div>
-          <Badge variant="Measured" label="Historical Concurrency" />
+          <Badge variant="Measured" label="Verified Telemetry" />
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-surface-2 text-muted border-b border-border">
-              <tr>
-                <th className="py-2.5 px-3 font-medium">Concurrent Loads</th>
-                <th className="py-2.5 px-3 font-medium">Combined Draw</th>
-                <th className="py-2.5 px-3 font-medium">Recorded Hours</th>
-                <th className="py-2.5 px-3 font-medium">Demand Risk</th>
-                <th className="py-2.5 px-3 font-medium">Load Shedding Recommendation</th>
+          <table className="w-full text-left text-xs font-mono">
+            <thead>
+              <tr className="border-b border-border text-muted uppercase text-[11px]">
+                <th className="py-2.5 px-3">Concurrency Pattern</th>
+                <th className="py-2.5 px-3">Historical Occurrences</th>
+                <th className="py-2.5 px-3">Avg Combined Load</th>
+                <th className="py-2.5 px-3">Peak Coincidence</th>
+                <th className="py-2.5 px-3">Tariff Window Risk</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
-              {simultaneousUsage.map((item) => (
-                <tr key={item.appliances} className="hover:bg-surface-2/40 transition-colors">
-                  <td className="py-3 px-3 font-medium text-text flex items-center gap-2">
-                    <Activity className="w-3.5 h-3.5 text-primary" />
-                    {item.appliances}
-                  </td>
-                  <td className="py-3 px-3 font-mono font-semibold text-text">{item.combinedWatts} W</td>
-                  <td className="py-3 px-3 font-mono text-muted">{item.concurrentHours} hrs</td>
+            <tbody className="divide-y divide-border/40 text-text">
+              {simultaneousUsage.map((pattern, pIdx) => (
+                <tr key={pIdx} className="hover:bg-surface-2/60 transition-colors">
+                  <td className="py-3 px-3 font-semibold text-text">{pattern.patternName}</td>
+                  <td className="py-3 px-3 text-muted">{pattern.occurrences} intervals</td>
+                  <td className="py-3 px-3 text-primary font-bold">{pattern.avgCombinedKw} kW</td>
+                  <td className="py-3 px-3">{pattern.peakSharePercent}% Peak</td>
                   <td className="py-3 px-3">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border ${
-                      item.riskLevel.includes('Critical')
-                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                        : item.riskLevel === 'Elevated'
-                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                        : 'bg-sky-500/10 text-sky-400 border-sky-500/20'
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      pattern.riskLevel === 'high' ? 'bg-danger/10 text-danger border border-danger/30' :
+                      pattern.riskLevel === 'medium' ? 'bg-warning/10 text-warning border border-warning/30' :
+                      'bg-surface-2 text-muted border border-border'
                     }`}>
-                      {item.riskLevel}
+                      {pattern.riskLevel.toUpperCase()}
                     </span>
-                  </td>
-                  <td className="py-3 px-3 text-muted">
-                    {item.riskLevel.includes('Critical')
-                      ? 'Prevent triple concurrency by staggering laundry start times via automation.'
-                      : item.riskLevel === 'Elevated'
-                      ? 'Schedule laundry cycles outside of 17:00–22:00 evening HVAC recovery hours.'
-                      : 'Acceptable concurrent draw during off-peak morning hours.'}
                   </td>
                 </tr>
               ))}
@@ -289,37 +282,6 @@ export default function LoadManagement() {
           </table>
         </div>
       </div>
-
-      {/* Load Shedding & Shifting Recommendations */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-text text-sm">Actionable Load Shedding Advice</h3>
-          <span className="text-xs text-muted">Peak shaving strategies to protect circuits and lower bills</span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {loadSheddingAdvice.map((advice, idx) => (
-            <div key={idx} className="bg-surface border border-border rounded-xl p-4 space-y-2.5 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-semibold text-sm text-text flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    {advice.title}
-                  </span>
-                  <Badge variant={advice.badge} label={advice.badge} />
-                </div>
-                <p className="text-xs text-muted leading-relaxed">{advice.action}</p>
-              </div>
-
-              <div className="mt-2 pt-2 border-t border-border flex items-start gap-2 bg-primary/5 p-2 rounded-lg">
-                <ArrowRight className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-                <span className="text-xs text-primary font-medium">{advice.impact}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
-

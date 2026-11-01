@@ -10,7 +10,9 @@ import {
   Filter, 
   RefreshCw,
   Sparkles,
-  Info
+  Info,
+  Layers,
+  Activity
 } from 'lucide-react';
 import api from '../../services/api.js';
 import PageHeader from '../../components/layout/PageHeader.jsx';
@@ -18,6 +20,7 @@ import StatCard from '../../components/cards/StatCard.jsx';
 import Badge from '../../components/ui/Badge.jsx';
 import LoadingState from '../../components/ui/LoadingState.jsx';
 import ErrorState from '../../components/ui/ErrorState.jsx';
+import EmptyState from '../../components/ui/EmptyState.jsx';
 import { formatNumber } from '../../lib/utils.js';
 
 export default function EnergyAnomalies() {
@@ -76,140 +79,159 @@ export default function EnergyAnomalies() {
 
   const getDeviceIcon = (type) => {
     switch (type) {
-      case 'hvac': return Flame;
-      case 'dishwasher': return Wind;
-      case 'washer_dryer': return Zap;
+      case 'hvac': return Wind;
+      case 'dishwasher': return Zap;
+      case 'washer_dryer': return Layers;
       default: return Bot;
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-300">
       {/* Page Header */}
       <PageHeader
         title="Energy Anomalies & Pattern Deviations"
         subtitle="Identified statistical deviations beyond 3-sigma thresholds (labelled as unusual, not equipment faults)"
         badge={<Badge variant="Estimated" label="3-Sigma Bounds" />}
-        action={
+        actions={
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface border border-border text-xs font-medium text-text hover:bg-surface-2 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-surface border border-border text-xs font-mono font-medium text-text hover:border-primary/40 transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-            Scan Anomalies
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-primary' : 'text-primary'}`} />
+            <span>{refreshing ? 'Scanning...' : 'Scan Anomalies'}</span>
           </button>
         }
       />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Unusual Events"
+          title="Detected Unusual Events"
           value={totalAnomaliesCount}
-          subvalue="Exceeding 3σ baseline bounds"
+          subtitle="Beyond 3-sigma baseline envelope"
           icon={AlertTriangle}
-          badge={<Badge variant="Estimated" label="3σ Filtered" />}
+          badge="Estimated"
+          accent="warning"
         />
         <StatCard
-          title="Elevated Deviations"
+          title="High Deviation Count"
           value={severityBreakdown.high || 0}
-          subvalue="High demand during peak tariff"
-          icon={ShieldAlert}
-          badge={<Badge variant="Estimated" label="High Deviation" />}
+          subtitle="&gt; 4.0σ extreme spikes"
+          icon={Flame}
+          badge="Estimated"
+          accent="danger"
         />
         <StatCard
-          title="Moderate Variances"
+          title="Moderate Deviations"
           value={severityBreakdown.medium || 0}
-          subvalue="Extended cycle durations"
-          icon={AlertTriangle}
-          badge={<Badge variant="Measured" label="Medium" />}
+          subtitle="3.0σ – 4.0σ variance range"
+          icon={Activity}
+          badge="Estimated"
+          accent="warning"
         />
         <StatCard
-          title="Minor Variances"
-          value={severityBreakdown.low || 0}
-          subvalue="Deep-clean cycle variations"
-          icon={Info}
-          badge={<Badge variant="Measured" label="Low" />}
+          title="Baseline Safety Margin"
+          value="99.73%"
+          subtitle="Gaussian distribution bound"
+          icon={ShieldAlert}
+          badge="Measured"
+          accent="primary"
         />
       </div>
 
-      {/* Filter and Events Table */}
-      <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <h3 className="font-semibold text-text text-sm">Detected Unusual Consumption Events</h3>
-            <p className="text-xs text-muted">Telemetry rows exhibiting statistically significant load spikes</p>
-          </div>
-
-          <div className="flex items-center gap-1.5 bg-surface-2 p-1 rounded-lg border border-border text-xs">
-            {['all', 'high', 'medium', 'low'].map((sev) => (
-              <button
-                key={sev}
-                onClick={() => setSeverityFilter(sev)}
-                className={`px-2.5 py-1 rounded font-medium transition-colors capitalize ${
-                  severityFilter === sev ? 'bg-primary text-black font-semibold' : 'text-muted hover:text-text'
-                }`}
-              >
-                {sev === 'all' ? 'All Deviations' : `${sev} Severity`}
-              </button>
-            ))}
-          </div>
+      {/* Severity Filter Pills */}
+      <div className="bg-surface border border-border rounded-card p-4 shadow-sm flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-mono text-muted uppercase">Filter Severity:</span>
+          {['all', 'high', 'medium', 'low'].map(sev => (
+            <button
+              key={sev}
+              onClick={() => setSeverityFilter(sev)}
+              className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold capitalize transition-all ${
+                severityFilter === sev
+                  ? 'bg-primary text-black shadow-[0_0_8px_rgba(34,211,238,0.25)]'
+                  : 'bg-surface-2 text-muted hover:text-text border border-border'
+              }`}
+            >
+              {sev}
+            </button>
+          ))}
         </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-surface-2 text-muted border-b border-border">
-              <tr>
-                <th className="py-2.5 px-3 font-medium">Timestamp</th>
-                <th className="py-2.5 px-3 font-medium">Appliance</th>
-                <th className="py-2.5 px-3 font-medium">Observed Draw</th>
-                <th className="py-2.5 px-3 font-medium">Expected Mean</th>
-                <th className="py-2.5 px-3 font-medium">Deviation</th>
-                <th className="py-2.5 px-3 font-medium">Severity</th>
-                <th className="py-2.5 px-3 font-medium">Context & Mitigation</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filteredAnomalies.map((anom) => {
-                const Icon = getDeviceIcon(anom.deviceType);
-                return (
-                  <tr key={anom.id} className="hover:bg-surface-2/40 transition-colors">
-                    <td className="py-3 px-3 font-mono text-muted whitespace-nowrap">{anom.timestamp}</td>
-                    <td className="py-3 px-3 font-medium text-text flex items-center gap-2 whitespace-nowrap">
-                      <Icon className="w-3.5 h-3.5 text-primary" />
-                      {anom.appliance}
-                    </td>
-                    <td className="py-3 px-3 font-mono font-bold text-rose-400">{anom.measuredKwh} kWh</td>
-                    <td className="py-3 px-3 font-mono text-muted">{anom.baselineExpectedKwh} kWh</td>
-                    <td className="py-3 px-3 font-mono font-semibold text-amber-400">+{anom.deviationPercent}%</td>
-                    <td className="py-3 px-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border uppercase ${
-                        anom.severity === 'high'
-                          ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                          : anom.severity === 'medium'
-                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                          : 'bg-sky-500/10 text-sky-400 border-sky-500/20'
-                      }`}>
-                        {anom.severity}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3 max-w-md">
-                      <div className="font-semibold text-text text-xs">{anom.label}</div>
-                      <p className="text-muted text-[11px] mt-0.5">{anom.possibleExplanation}</p>
-                      <div className="text-primary text-[11px] mt-1 font-medium flex items-center gap-1">
-                        <ArrowRight className="w-3 h-3 shrink-0" />
-                        {anom.suggestedAction}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="text-xs font-mono text-muted">
+          Showing {filteredAnomalies.length} of {totalAnomaliesCount} deviations
         </div>
       </div>
+
+      {/* Anomalies List */}
+      {filteredAnomalies.length === 0 ? (
+        <EmptyState
+          title="No Matching Unusual Events"
+          description="All appliance circuits operated within normal Gaussian envelopes for this filter."
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredAnomalies.map((anom) => {
+            const Icon = getDeviceIcon(anom.deviceType);
+            const isHigh = anom.severity === 'high';
+            const isMed = anom.severity === 'medium';
+
+            return (
+              <div
+                key={anom.id}
+                className="bg-surface border border-border rounded-card p-5 shadow-sm space-y-4 flex flex-col justify-between hover:border-primary/40 transition-all hover:shadow-[0_0_20px_rgba(34,211,238,0.06)]"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-3 pb-3 border-b border-border">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-surface-2 border border-border flex items-center justify-center text-primary">
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-sm text-text">{anom.applianceName}</h4>
+                        <span className="text-xs font-mono text-muted">{anom.timestamp}</span>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold uppercase border ${
+                      isHigh
+                        ? 'bg-danger/10 text-danger border-danger/30'
+                        : isMed
+                        ? 'bg-warning/10 text-warning border-warning/30'
+                        : 'bg-surface-2 text-muted border-border'
+                    }`}>
+                      {anom.severity}
+                    </span>
+                  </div>
+
+                  {/* Metrics Box */}
+                  <div className="grid grid-cols-2 gap-2 my-3 p-3 rounded-xl bg-surface-2 border border-border/60 text-xs font-mono">
+                    <div>
+                      <span className="text-[10px] text-muted uppercase">Observed Draw</span>
+                      <p className="font-bold text-text text-sm mt-0.5">{anom.observedKwh} kWh</p>
+                      <p className="text-[10px] text-danger mt-0.5">+{anom.deviationPercent}% vs mean</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-muted uppercase">3σ Threshold</span>
+                      <p className="font-bold text-warning text-sm mt-0.5">{anom.expectedThresholdKwh} kWh</p>
+                      <p className="text-[10px] text-muted mt-0.5">Z-score: {anom.zScore}σ</p>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-muted leading-relaxed">
+                    {anom.explanation}
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-border flex items-center justify-between text-[11px] font-mono">
+                  <span className="text-muted">Status:</span>
+                  <span className="text-primary font-semibold">Flagged for Review</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
-

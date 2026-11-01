@@ -123,7 +123,7 @@ export default function SettingsView() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       {/* Page Header */}
       <PageHeader
         title="Settings & Household Management"
@@ -133,33 +133,37 @@ export default function SettingsView() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Household Management Form */}
-        <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-border">
-            <div className="flex items-center gap-2">
-              <Home className="w-4 h-4 text-primary" />
-              <h3 className="font-semibold text-text text-sm">Household Metadata</h3>
+        <div className="bg-[#0D1520]/80 border border-[#1F334D] rounded-2xl p-5 space-y-4 backdrop-blur-md">
+          <div className="flex items-center justify-between pb-3.5 border-b border-[#1F334D]">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+                <Home className="w-4 h-4" />
+              </div>
+              <h3 className="font-semibold text-slate-100 text-sm tracking-wide">Household Metadata</h3>
             </div>
-            <span className="font-mono text-xs text-muted">ID: {profile?.householdId}</span>
+            <span className="font-mono text-xs text-slate-400 bg-[#091019] px-2.5 py-1 rounded-lg border border-[#1F334D]">
+              ID: {profile?.householdId}
+            </span>
           </div>
 
-          <form onSubmit={handleSaveHousehold} className="space-y-4">
+          <form onSubmit={handleSaveHousehold} className="space-y-4 pt-1">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-text">Household Display Name</label>
+              <label className="text-xs font-medium text-slate-200">Household Display Name</label>
               <input
                 type="text"
                 value={householdName}
                 onChange={(e) => setHouseholdName(e.target.value)}
                 required
-                className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-xs text-text focus:outline-none focus:border-primary"
+                className="w-full bg-[#091019] border border-[#1F334D] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-text">Billing Currency Code</label>
+              <label className="text-xs font-medium text-slate-200">Billing Currency Code</label>
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-xs text-text focus:outline-none focus:border-primary font-mono"
+                className="w-full bg-[#091019] border border-[#1F334D] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all font-mono"
               >
                 <option value="USD">USD ($ - United States Dollar)</option>
                 <option value="EUR">EUR (€ - Euro)</option>
@@ -168,9 +172,9 @@ export default function SettingsView() {
               </select>
             </div>
 
-            <div className="space-y-1.5 pt-2 border-t border-border">
+            <div className="space-y-1.5 pt-2 border-t border-[#1F334D]">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-text flex items-center gap-1.5">
+                <label className="text-xs font-medium text-slate-200 flex items-center gap-1.5">
                   <Leaf className="w-3.5 h-3.5 text-emerald-400" />
                   Carbon Intensity Factor (kg CO₂e / kWh)
                 </label>
@@ -184,26 +188,26 @@ export default function SettingsView() {
                 value={carbonFactor}
                 onChange={(e) => setCarbonFactor(e.target.value)}
                 required
-                className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-xs font-mono text-text focus:outline-none focus:border-primary"
+                className="w-full bg-[#091019] border border-[#1F334D] rounded-xl px-3.5 py-2.5 text-xs font-mono text-cyan-400 font-semibold focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all"
               />
-              <p className="text-[11px] text-muted">
+              <p className="text-[11px] text-slate-400">
                 Governs carbon projections in What-if Simulator and Sustainability Center.
               </p>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-text">Emission Factor Source Citation</label>
+              <label className="text-xs font-medium text-slate-200">Emission Factor Source Citation</label>
               <input
                 type="text"
                 value={carbonSource}
                 onChange={(e) => setCarbonSource(e.target.value)}
                 required
-                className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-xs text-text focus:outline-none focus:border-primary"
+                className="w-full bg-[#091019] border border-[#1F334D] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all"
               />
             </div>
 
             {householdSuccess && (
-              <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2">
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
                 Household parameters saved successfully!
               </div>
@@ -213,7 +217,7 @@ export default function SettingsView() {
               <button
                 type="submit"
                 disabled={savingHousehold}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-black text-xs font-semibold hover:bg-primary-hover transition-colors shadow-sm disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-400 text-slate-950 text-xs font-bold hover:brightness-110 transition-all shadow-md shadow-cyan-500/20 disabled:opacity-50"
               >
                 <Save className="w-3.5 h-3.5" />
                 {savingHousehold ? 'Saving...' : 'Save Parameters'}
@@ -224,20 +228,22 @@ export default function SettingsView() {
 
         {/* Notification Preferences & System Status */}
         <div className="space-y-6">
-          <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
-              <div className="flex items-center gap-2">
-                <Bell className="w-4 h-4 text-primary" />
-                <h3 className="font-semibold text-text text-sm">Notification Channels</h3>
+          <div className="bg-[#0D1520]/80 border border-[#1F334D] rounded-2xl p-5 space-y-4 backdrop-blur-md">
+            <div className="flex items-center justify-between pb-3.5 border-b border-[#1F334D]">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+                  <Bell className="w-4 h-4" />
+                </div>
+                <h3 className="font-semibold text-slate-100 text-sm tracking-wide">Notification Channels</h3>
               </div>
               {notifSuccess && (
-                <span className="text-xs text-emerald-400 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Saved
+                <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Preferences Saved
                 </span>
               )}
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 pt-1">
               {[
                 {
                   key: 'email_alerts',
@@ -260,16 +266,20 @@ export default function SettingsView() {
                   desc: 'Instant alert when total household demand spikes past 6.0 kW.'
                 }
               ].map((item) => (
-                <div key={item.key} className="flex items-center justify-between p-3 rounded-lg bg-surface-2/40 border border-border/60">
+                <div 
+                  key={item.key} 
+                  className="flex items-center justify-between p-3.5 rounded-xl bg-[#091019]/80 border border-[#1F334D] hover:border-cyan-500/30 transition-all cursor-pointer"
+                  onClick={() => handleToggleNotif(item.key)}
+                >
                   <div className="space-y-0.5 max-w-sm">
-                    <div className="text-xs font-semibold text-text">{item.title}</div>
-                    <div className="text-[11px] text-muted leading-relaxed">{item.desc}</div>
+                    <div className="text-xs font-semibold text-slate-200">{item.title}</div>
+                    <div className="text-[11px] text-slate-400 leading-relaxed">{item.desc}</div>
                   </div>
                   <input
                     type="checkbox"
                     checked={!!notifs[item.key]}
-                    onChange={() => handleToggleNotif(item.key)}
-                    className="w-4 h-4 accent-primary rounded cursor-pointer shrink-0 ml-3"
+                    onChange={() => {}} // handled by row onClick
+                    className="w-4.5 h-4.5 accent-cyan-400 rounded cursor-pointer shrink-0 ml-3"
                   />
                 </div>
               ))}
@@ -277,31 +287,45 @@ export default function SettingsView() {
           </div>
 
           {/* Infrastructure Health Status */}
-          <div className="bg-surface border border-border rounded-xl p-5 space-y-3">
+          <div className="bg-[#0D1520]/80 border border-[#1F334D] rounded-2xl p-5 space-y-3.5 backdrop-blur-md">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-emerald-400" />
-                <h3 className="font-semibold text-text text-sm">Infrastructure Status</h3>
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                  <Activity className="w-4 h-4" />
+                </div>
+                <h3 className="font-semibold text-slate-100 text-sm tracking-wide">Infrastructure Status</h3>
               </div>
               <Badge variant="Measured" label="All Systems Healthy" />
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-              <div className="bg-surface-2 p-2.5 rounded-lg border border-border text-center">
-                <div className="text-[11px] text-muted">Node.js API</div>
-                <div className="font-semibold text-emerald-400 mt-0.5">Port 4000</div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+              <div className="bg-[#091019]/80 p-3 rounded-xl border border-[#1F334D] text-center">
+                <div className="text-[11px] text-slate-400">Node.js API</div>
+                <div className="font-bold text-emerald-400 mt-1 flex items-center justify-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Port 4000
+                </div>
               </div>
-              <div className="bg-surface-2 p-2.5 rounded-lg border border-border text-center">
-                <div className="text-[11px] text-muted">Python Analytics</div>
-                <div className="font-semibold text-emerald-400 mt-0.5">Port 8000</div>
+              <div className="bg-[#091019]/80 p-3 rounded-xl border border-[#1F334D] text-center">
+                <div className="text-[11px] text-slate-400">Python Analytics</div>
+                <div className="font-bold text-emerald-400 mt-1 flex items-center justify-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Port 8000
+                </div>
               </div>
-              <div className="bg-surface-2 p-2.5 rounded-lg border border-border text-center">
-                <div className="text-[11px] text-muted">PostgreSQL</div>
-                <div className="font-semibold text-emerald-400 mt-0.5">Healthy</div>
+              <div className="bg-[#091019]/80 p-3 rounded-xl border border-[#1F334D] text-center">
+                <div className="text-[11px] text-slate-400">PostgreSQL</div>
+                <div className="font-bold text-emerald-400 mt-1 flex items-center justify-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  Healthy
+                </div>
               </div>
-              <div className="bg-surface-2 p-2.5 rounded-lg border border-border text-center">
-                <div className="text-[11px] text-muted">Redis Streams</div>
-                <div className="font-semibold text-emerald-400 mt-0.5">Active</div>
+              <div className="bg-[#091019]/80 p-3 rounded-xl border border-[#1F334D] text-center">
+                <div className="text-[11px] text-slate-400">Redis Streams</div>
+                <div className="font-bold text-emerald-400 mt-1 flex items-center justify-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  Active
+                </div>
               </div>
             </div>
           </div>
@@ -310,4 +334,3 @@ export default function SettingsView() {
     </div>
   );
 }
-

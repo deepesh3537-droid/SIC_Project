@@ -14,7 +14,8 @@ import {
   Sun,
   Moon,
   Sliders,
-  DollarSign
+  DollarSign,
+  Layers
 } from 'lucide-react';
 import api from '../../services/api.js';
 import PageHeader from '../../components/layout/PageHeader.jsx';
@@ -83,66 +84,70 @@ export default function SmartScheduling() {
 
   const getDeviceIcon = (type) => {
     switch (type) {
-      case 'hvac': return Flame;
-      case 'dishwasher': return Wind;
-      case 'washer_dryer': return Zap;
+      case 'hvac': return Wind;
+      case 'dishwasher': return Zap;
+      case 'washer_dryer': return Layers;
       default: return Bot;
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-300">
       {/* Page Header */}
       <PageHeader
         title="Smart Appliance Scheduling"
         subtitle="Tariff-aware run time recommendations, hypothetical schedule comparisons, and explainable optimization"
         badge={<Badge variant="Estimated" label="Tariff Arbitrage Model" />}
-        action={
+        actions={
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface border border-border text-xs font-medium text-text hover:bg-surface-2 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-surface border border-border text-xs font-mono font-medium text-text hover:border-primary/40 transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-            Recalculate
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-primary' : 'text-primary'}`} />
+            <span>{refreshing ? 'Recalculating...' : 'Recalculate'}</span>
           </button>
         }
       />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Potential Annual Savings"
           value={formatCurrency(summary.totalPotentialAnnualSavingsUsd || 214.19)}
-          subvalue={`${formatCurrency(summary.totalPotentialMonthlySavingsUsd || 17.85)} / month`}
+          subtitle={`${formatCurrency(summary.totalPotentialMonthlySavingsUsd || 17.85)} / month`}
           icon={TrendingDown}
-          badge={<Badge variant="Estimated" label="Savings Model" />}
+          badge="Estimated"
+          accent="primary"
         />
         <StatCard
           title="Off-Peak Tariff Arbitrage"
           value="54.5% cheaper"
-          subvalue="$0.10/kWh vs $0.22/kWh peak"
+          subtitle="$0.10/kWh vs $0.22/kWh peak"
           icon={DollarSign}
-          badge={<Badge variant="Measured" label="Utility Tariff" />}
+          badge="Measured"
+          accent="info"
         />
         <StatCard
           title="Peak Demand Window"
           value="17:00 - 22:00"
-          subvalue="5 hours daily penalty rate"
+          subtitle="5 hours daily penalty rate"
           icon={Clock}
-          badge={<Badge variant="Measured" label="Peak Hours" />}
+          badge="Measured"
+          accent="warning"
         />
         <StatCard
           title="Optimizable Loads"
           value="3 Appliances"
-          subvalue="HVAC, Dishwasher, Washer/Dryer"
+          subtitle="HVAC, Dishwasher, Washer/Dryer"
           icon={Sparkles}
-          badge={<Badge variant="Estimated" label="High Impact" />}
+          badge="Estimated"
+          accent="primary"
         />
       </div>
 
       {/* 24-Hour Tariff Window Visualizer */}
-      <div className="bg-surface border border-border rounded-xl p-5 space-y-3">
+      <div className="bg-surface border border-border rounded-card p-5 space-y-3 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-semibold text-text text-sm">24-Hour Diurnal Tariff Schedule</h3>
@@ -152,27 +157,27 @@ export default function SmartScheduling() {
         </div>
 
         {/* Visual timeline bar */}
-        <div className="w-full h-8 rounded-lg overflow-hidden flex border border-border text-[11px] font-mono">
-          <div className="w-[70.8%] bg-emerald-500/20 border-r border-border text-emerald-400 flex items-center justify-center font-semibold">
-            <Sun className="w-3.5 h-3.5 mr-1" />
-            Off-Peak (00:00–17:00) $0.10/kWh
+        <div className="w-full h-9 rounded-xl overflow-hidden flex border border-border text-[11px] font-mono shadow-inner">
+          <div className="w-[70.8%] bg-primary/15 border-r border-border text-primary flex items-center justify-center font-semibold">
+            <Sun className="w-3.5 h-3.5 mr-1 text-primary" />
+            <span>Off-Peak (00:00–17:00) $0.10/kWh</span>
           </div>
-          <div className="w-[20.8%] bg-rose-500/20 border-r border-border text-rose-400 flex items-center justify-center font-semibold">
-            <Clock className="w-3.5 h-3.5 mr-1" />
-            Peak (17:00–22:00) $0.22/kWh
+          <div className="w-[20.8%] bg-danger/20 border-r border-border text-danger flex items-center justify-center font-semibold">
+            <Clock className="w-3.5 h-3.5 mr-1 text-danger" />
+            <span>Peak (17:00–22:00) $0.22/kWh</span>
           </div>
-          <div className="w-[8.4%] bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-semibold">
-            <Moon className="w-3.5 h-3.5 mr-1" />
-            $0.10
+          <div className="w-[8.4%] bg-primary/15 text-primary flex items-center justify-center font-semibold">
+            <Moon className="w-3.5 h-3.5 mr-1 text-primary" />
+            <span>$0.10</span>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between text-xs text-muted pt-1">
+        <div className="flex flex-wrap items-center justify-between text-xs text-muted font-mono pt-1">
           <span>00:00 Overnight</span>
           <span>06:00 Morning</span>
           <span>12:00 Midday</span>
-          <span className="text-rose-400 font-semibold">17:00 Peak Starts</span>
-          <span className="text-emerald-400 font-semibold">22:00 Off-Peak Returns</span>
+          <span className="text-danger font-semibold">17:00 Peak Starts</span>
+          <span className="text-primary font-semibold">22:00 Off-Peak Returns</span>
           <span>24:00</span>
         </div>
       </div>
@@ -181,7 +186,7 @@ export default function SmartScheduling() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-text text-sm">Hypothetical Schedule Comparison Matrix</h3>
-          <span className="text-xs text-muted">Current routine vs. Recommended off-peak window</span>
+          <span className="text-xs text-muted font-mono">Current routine vs. Recommended off-peak window</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -191,12 +196,15 @@ export default function SmartScheduling() {
             const isOptimal = item.status === 'optimal';
 
             return (
-              <div key={item.id} className="bg-surface border border-border rounded-xl p-5 space-y-4 flex flex-col justify-between">
+              <div 
+                key={item.id} 
+                className="bg-surface border border-border rounded-card p-5 space-y-4 flex flex-col justify-between hover:border-primary/40 transition-all hover:shadow-[0_0_20px_rgba(34,211,238,0.06)]"
+              >
                 <div>
                   {/* Card Header */}
                   <div className="flex items-center justify-between pb-3 border-b border-border">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-surface-2 border border-border flex items-center justify-center text-primary">
+                      <div className="w-10 h-10 rounded-xl bg-surface-2 border border-border flex items-center justify-center text-primary">
                         <Icon className="w-5 h-5" />
                       </div>
                       <div>
@@ -206,7 +214,7 @@ export default function SmartScheduling() {
                     </div>
                     {item.annualSavingsUsd > 0 ? (
                       <div className="text-right">
-                        <span className="text-base font-bold font-mono text-emerald-400">
+                        <span className="text-base font-bold font-mono text-primary">
                           +${item.annualSavingsUsd.toFixed(2)}/yr
                         </span>
                         <div className="text-[11px] text-muted">Save {item.savingsPercent}%</div>
@@ -219,33 +227,33 @@ export default function SmartScheduling() {
                   {/* Schedule Comparison Grid */}
                   <div className="grid grid-cols-2 gap-3 py-3">
                     {/* Current Schedule */}
-                    <div className={`p-3 rounded-lg border ${
-                      item.currentSchedule.isPeak ? 'bg-rose-500/5 border-rose-500/20' : 'bg-surface-2 border-border'
+                    <div className={`p-3 rounded-xl border ${
+                      item.currentSchedule.isPeak ? 'bg-danger/10 border-danger/30' : 'bg-surface-2 border-border'
                     }`}>
-                      <div className="text-[11px] text-muted uppercase tracking-wider font-semibold">Current Routine</div>
+                      <div className="text-[10px] text-muted uppercase tracking-wider font-semibold font-mono">Current Routine</div>
                       <div className="text-sm font-bold font-mono text-text mt-1">{item.currentSchedule.time}</div>
                       <div className="text-xs text-muted mt-0.5">{item.currentSchedule.window}</div>
-                      <div className="text-xs font-mono font-medium text-rose-400 mt-2">
+                      <div className="text-xs font-mono font-medium text-danger mt-2">
                         {formatCurrency(item.currentSchedule.costPerCycleUsd)} / run
                       </div>
                     </div>
 
                     {/* Recommended Schedule */}
-                    <div className="p-3 rounded-lg border bg-emerald-500/5 border-emerald-500/20">
-                      <div className="text-[11px] text-emerald-400 uppercase tracking-wider font-semibold flex items-center gap-1">
-                        <Sparkles className="w-3 h-3" />
-                        Recommended
+                    <div className="p-3 rounded-xl border bg-primary/10 border-primary/30">
+                      <div className="text-[10px] text-primary uppercase tracking-wider font-semibold font-mono flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-primary" />
+                        <span>Recommended</span>
                       </div>
                       <div className="text-sm font-bold font-mono text-text mt-1">{item.recommendedSchedule.time}</div>
                       <div className="text-xs text-muted mt-0.5">{item.recommendedSchedule.window}</div>
-                      <div className="text-xs font-mono font-medium text-emerald-400 mt-2">
+                      <div className="text-xs font-mono font-medium text-primary mt-2">
                         {formatCurrency(item.recommendedSchedule.costPerCycleUsd)} / run
                       </div>
                     </div>
                   </div>
 
                   {/* Explainable Reasoning */}
-                  <div className="bg-surface-2/40 p-3 rounded-lg border border-border/60 text-xs text-muted leading-relaxed">
+                  <div className="bg-surface-2 p-3.5 rounded-xl border border-border/60 text-xs text-muted leading-relaxed">
                     <strong className="text-text block mb-1">Reasoning & Evidence:</strong>
                     {item.reasoning}
                   </div>
@@ -254,24 +262,24 @@ export default function SmartScheduling() {
                 {/* Action button */}
                 {!isOptimal && (
                   <div className="pt-2 border-t border-border flex items-center justify-between">
-                    <Badge variant={item.badge} label={item.badge} />
+                    <Badge variant={item.badge || 'Estimated'} label={item.badge} />
                     <button
                       onClick={() => handleApplySchedule(item.id)}
                       disabled={isApplied}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                         isApplied 
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                          : 'bg-primary text-black hover:bg-primary-hover shadow-sm'
+                          ? 'bg-primary/15 text-primary border border-primary/30 shadow-[0_0_10px_rgba(34,211,238,0.2)]' 
+                          : 'bg-primary text-black hover:bg-primary-hover shadow-[0_0_12px_rgba(34,211,238,0.25)]'
                       }`}
                     >
                       {isApplied ? (
                         <>
                           <CheckCircle2 className="w-3.5 h-3.5" />
-                          Schedule Activated
+                          <span>Schedule Activated</span>
                         </>
                       ) : (
                         <>
-                          Apply Smart Schedule
+                          <span>Apply Smart Schedule</span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </>
                       )}
@@ -286,4 +294,3 @@ export default function SmartScheduling() {
     </div>
   );
 }
-

@@ -1,12 +1,24 @@
 :root {
-  --bg: #0B0F10;
-  --surface: #12181A;
-  --surface-2: #1A2225;
-  --border: #26323A;
-  --text: #E8EEF0;
-  --muted: #8FA1A8;
-  --primary: #10B981;
-  --primary-soft: #6EE7B7;
+  /* Futuristic Energy Intelligence Palette (WATTWISE_UI_IMPLEMENTATION_GUIDE.md) */
+  --bg: #080F1B;
+  --surface: #111D2D;
+  --surface-2: #172538;
+  --surface-elevated: #1D2E45;
+  --border: #26394D;
+  --text: #F0F9FF;
+  --muted: #A9BDCC;
+
+  /* Accents */
+  --primary: #22D3EE;
+  --primary-soft: #67E8F9;
+  --primary-dark: #0891B2;
+  --secondary: #3B82F6;
+  --secondary-soft: #60A5FA;
+  --ai: #A78BFA;
+  --ai-soft: #C4B5FD;
+
+  /* Semantic Status */
+  --success: #10B981;
   --warning: #F59E0B;
   --danger: #F87171;
   --info: #38BDF8;
@@ -17,9 +29,8 @@
   --rule-r3: #A78BFA;
 
   /* Device Colors */
-  --device-hvac: #10B981;
+  --device-hvac: #22D3EE;
   --device-dishwasher: #38BDF8;
   --device-washer: #A78BFA;
   --device-vacuum: #F59E0B;
 }
-

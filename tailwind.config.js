@@ -7,30 +7,41 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: '#0B0F10',
-        surface: '#12181A',
-        'surface-2': '#1A2225',
-        border: '#26323A',
-        text: '#E8EEF0',
-        muted: '#8FA1A8',
+        bg: 'var(--bg)',
+        surface: 'var(--surface)',
+        'surface-2': 'var(--surface-2)',
+        'surface-elevated': 'var(--surface-elevated)',
+        border: 'var(--border)',
+        text: 'var(--text)',
+        muted: 'var(--muted)',
         primary: {
-          DEFAULT: '#10B981',
-          soft: '#6EE7B7',
-          dark: '#059669'
+          DEFAULT: 'var(--primary)',
+          soft: 'var(--primary-soft)',
+          dark: 'var(--primary-dark)',
+          hover: 'var(--primary-soft)',
         },
-        warning: '#F59E0B',
-        danger: '#F87171',
-        info: '#38BDF8',
+        secondary: {
+          DEFAULT: 'var(--secondary)',
+          soft: 'var(--secondary-soft)',
+        },
+        ai: {
+          DEFAULT: 'var(--ai)',
+          soft: 'var(--ai-soft)',
+        },
+        success: 'var(--success)',
+        warning: 'var(--warning)',
+        danger: 'var(--danger)',
+        info: 'var(--info)',
         rule: {
-          r1: '#F59E0B',
-          r2: '#38BDF8',
-          r3: '#A78BFA'
+          r1: 'var(--rule-r1)',
+          r2: 'var(--rule-r2)',
+          r3: 'var(--rule-r3)',
         },
         device: {
-          hvac: '#10B981',
-          dishwasher: '#38BDF8',
-          washer: '#A78BFA',
-          vacuum: '#F59E0B'
+          hvac: 'var(--device-hvac)',
+          dishwasher: 'var(--device-dishwasher)',
+          washer: 'var(--device-washer)',
+          vacuum: 'var(--device-vacuum)',
         }
       },
       fontFamily: {
@@ -44,4 +55,3 @@ export default {
   },
   plugins: [],
 }
-

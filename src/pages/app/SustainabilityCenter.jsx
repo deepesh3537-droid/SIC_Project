@@ -87,37 +87,37 @@ export default function SustainabilityCenter() {
   const { factorConfig = {}, summary = {}, monthlyTrend = [], achievements = [] } = data || {};
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       {/* Page Header */}
       <PageHeader
         title="Sustainability & Carbon Intelligence"
         subtitle="Transparent carbon accounting, household ecological goals, emissions trends, and green badges"
         badge={<Badge variant="Assumption" label="Factor: 0.385 kg/kWh" />}
-        action={
+        actions={
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface border border-border text-xs font-medium text-text hover:bg-surface-2 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#0D1520] border border-[#1F334D] text-xs font-semibold text-slate-200 hover:text-white hover:border-cyan-500/40 hover:bg-[#142338] transition-all shadow-sm disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh Footprint
           </button>
         }
       />
 
       {/* ADR-012 Factor Disclosure Banner */}
-      <div className="bg-surface-2 border border-border rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0">
+      <div className="bg-[#0D1520]/80 border border-[#1F334D] rounded-2xl p-4.5 backdrop-blur-md flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0">
             <Info className="w-4 h-4" />
           </div>
           <div>
-            <div className="font-semibold text-text flex items-center gap-2">
+            <div className="font-semibold text-slate-100 flex items-center gap-2">
               Carbon Factor Transparency (ADR-012)
               <Badge variant="Assumption" label="Disclosed Assumption" />
             </div>
-            <p className="text-muted mt-0.5">
-              Carbon emissions are not measured directly in raw IoT meters. Calculated via configured factor of <strong className="text-text font-mono">{factorConfig.carbonFactorKgPerKwh} kg CO₂e / kWh</strong> ({factorConfig.carbonSource}).
+            <p className="text-slate-400 mt-1 leading-relaxed">
+              Carbon emissions are not measured directly in raw IoT meters. Calculated via configured factor of <strong className="text-emerald-400 font-mono font-semibold">{factorConfig.carbonFactorKgPerKwh} kg CO₂e / kWh</strong> ({factorConfig.carbonSource}).
             </p>
           </div>
         </div>
@@ -170,28 +170,28 @@ export default function SustainabilityCenter() {
                   <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#22272e" />
-              <XAxis dataKey="label" stroke="#6b7280" fontSize={11} />
-              <YAxis stroke="#6b7280" fontSize={11} unit=" kg" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#1F334D" opacity={0.6} />
+              <XAxis dataKey="label" stroke="#64748B" fontSize={11} tickLine={false} />
+              <YAxis stroke="#64748B" fontSize={11} unit=" kg" tickLine={false} />
               <Tooltip 
-                content={({ active, payload, label }) => {
+                content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const d = payload[0].payload;
                     return (
-                      <div className="bg-surface border border-border p-3 rounded-lg shadow-lg text-xs space-y-1">
-                        <div className="font-semibold text-text">{d.label}</div>
-                        <div className="text-muted">Carbon: <span className="font-mono font-bold text-emerald-400">{d.carbonKg} kg CO₂e</span></div>
-                        <div className="text-muted">Energy: <span className="font-mono text-text">{d.totalKwh} kWh</span></div>
-                        <div className="text-muted">Tree Offset: <span className="font-mono text-text">~{d.treesEquivalent} trees</span></div>
+                      <div className="bg-[#0B131E]/95 border border-[#1F334D] p-3 rounded-xl shadow-xl text-xs space-y-1.5 backdrop-blur-md">
+                        <div className="font-semibold text-slate-100">{d.label}</div>
+                        <div className="text-slate-400">Carbon: <span className="font-mono font-bold text-emerald-400">{d.carbonKg} kg CO₂e</span></div>
+                        <div className="text-slate-400">Energy: <span className="font-mono text-slate-200">{d.totalKwh} kWh</span></div>
+                        <div className="text-slate-400">Tree Offset: <span className="font-mono text-slate-200">~{d.treesEquivalent} trees</span></div>
                       </div>
                     );
                   }
                   return null;
                 }}
               />
-              <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px', color: '#9ca3af' }} />
+              <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px', color: '#94A3B8' }} />
               <ReferenceLine y={200} stroke="#EF4444" strokeDasharray="4 4" label={{ value: 'Target Ceiling: 200 kg', fill: '#EF4444', fontSize: 10, position: 'top' }} />
-              <Area type="monotone" dataKey="carbonKg" name="Emissions (kg CO₂e)" stroke="#10B981" strokeWidth={2} fillOpacity={1} fill="url(#colorCarbon)" />
+              <Area type="monotone" dataKey="carbonKg" name="Emissions (kg CO₂e)" stroke="#10B981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorCarbon)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -200,16 +200,28 @@ export default function SustainabilityCenter() {
       {/* Eco-Achievements & Milestones */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-text text-sm">Sustainability Milestones & Badges</h3>
-          <span className="text-xs text-muted">Earned achievements for verified low-carbon operation</span>
+          <div>
+            <h3 className="font-semibold text-slate-100 text-sm tracking-wide">Sustainability Milestones & Badges</h3>
+            <p className="text-xs text-slate-400 mt-0.5">Earned achievements for verified low-carbon operation and conservation</p>
+          </div>
+          <Badge variant="Audited" label="Automated Verification" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {achievements.map((ach) => (
-            <div key={ach.id} className="bg-surface border border-border rounded-xl p-4 flex flex-col justify-between space-y-3">
+            <div 
+              key={ach.id} 
+              className={`border rounded-2xl p-4.5 flex flex-col justify-between space-y-3 transition-all duration-200 backdrop-blur-md ${
+                ach.unlocked 
+                  ? 'bg-gradient-to-b from-[#0D1F1A]/80 to-[#0A1617]/80 border-emerald-500/30 hover:border-emerald-500/50 shadow-sm shadow-emerald-950/20' 
+                  : 'bg-[#0D1520]/80 border-[#1F334D] hover:border-[#2A4566]'
+              }`}
+            >
               <div className="flex items-center justify-between">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                  ach.unlocked ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-surface-2 text-muted border border-border'
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                  ach.unlocked 
+                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-sm shadow-emerald-500/10' 
+                    : 'bg-[#152336] text-slate-500 border border-[#1F334D]'
                 }`}>
                   <Award className="w-4 h-4" />
                 </div>
@@ -217,24 +229,27 @@ export default function SustainabilityCenter() {
               </div>
 
               <div>
-                <h4 className="font-semibold text-xs text-text">{ach.title}</h4>
-                <p className="text-xs text-muted mt-1 leading-relaxed">{ach.description}</p>
+                <h4 className="font-semibold text-xs text-slate-100">{ach.title}</h4>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">{ach.description}</p>
               </div>
 
-              <div className="pt-2 border-t border-border flex items-center justify-between text-[11px]">
+              <div className="pt-2 border-t border-[#1F334D]/80 flex items-center justify-between text-[11px]">
                 {ach.unlocked ? (
-                  <span className="text-emerald-400 font-medium flex items-center gap-1">
+                  <span className="text-emerald-400 font-semibold flex items-center gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    {ach.unlockedDate}
+                    Unlocked: {ach.unlockedDate}
                   </span>
                 ) : (
-                  <div className="w-full space-y-1">
-                    <div className="flex justify-between text-muted">
+                  <div className="w-full space-y-1.5">
+                    <div className="flex justify-between text-slate-400">
                       <span>Progress</span>
-                      <span className="font-mono text-text font-bold">{ach.progressPercent}%</span>
+                      <span className="font-mono text-cyan-400 font-bold">{ach.progressPercent}%</span>
                     </div>
-                    <div className="w-full bg-surface-2 h-1.5 rounded-full overflow-hidden">
-                      <div className="bg-primary h-full rounded-full" style={{ width: `${ach.progressPercent}%` }} />
+                    <div className="w-full bg-[#152336] h-1.5 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-gradient-to-r from-cyan-500 to-teal-400 h-full rounded-full transition-all duration-300" 
+                        style={{ width: `${ach.progressPercent}%` }} 
+                      />
                     </div>
                   </div>
                 )}
@@ -246,4 +261,3 @@ export default function SustainabilityCenter() {
     </div>
   );
 }
-

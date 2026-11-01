@@ -11,7 +11,9 @@ import {
   Clock, 
   Zap, 
   Gauge,
-  Bot
+  Bot,
+  Layers,
+  ArrowUpRight
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -80,25 +82,24 @@ export default function SmartDevices() {
   }
 
   const { devices = [], totalDevices = 4 } = data || {};
-
   const totalConnectedWatts = devices.reduce((sum, d) => sum + (d.powerRatingWatts || 0), 0);
 
   const deviceIcons = {
-    hvac: Flame,
-    dishwasher: Wind,
-    washer_dryer: Zap,
+    hvac: Wind,
+    dishwasher: Cpu,
+    washer_dryer: Layers,
     robot_vacuum: Bot
   };
 
   const deviceColors = {
-    hvac: '#10B981',
-    dishwasher: '#38BDF8',
+    hvac: '#22D3EE',
+    dishwasher: '#3B82F6',
     washer_dryer: '#A78BFA',
     robot_vacuum: '#F59E0B'
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-in fade-in duration-300">
       {/* Page Header */}
       <PageHeader
         title="Smart Devices & Inventory"
@@ -108,9 +109,9 @@ export default function SmartDevices() {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-border text-xs font-mono font-medium text-text border border-border transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-surface text-xs font-mono font-medium text-text border border-border hover:border-primary/40 transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-primary' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-primary' : 'text-primary'}`} />
             <span>{refreshing ? 'Refreshing...' : 'Refresh Devices'}</span>
           </button>
         }
@@ -143,9 +144,9 @@ export default function SmartDevices() {
           value="HVAC System"
           unit="91.8%"
           subtitle="3,064.60 kWh ($415.82 billed spend)"
-          icon={Flame}
+          icon={Wind}
           badge="Measured"
-          accent="warning"
+          accent="primary"
         />
 
         <StatCard
@@ -156,7 +157,7 @@ export default function SmartDevices() {
           icon={Clock}
           badge="Estimated"
           badgeTooltip="Calculated during unoccupied, non-cycling overnight intervals."
-          accent="primary"
+          accent="warning"
         />
       </div>
 
@@ -164,13 +165,13 @@ export default function SmartDevices() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {devices.map(dev => {
           const Icon = deviceIcons[dev.type] || Cpu;
-          const color = deviceColors[dev.type] || '#10B981';
+          const color = deviceColors[dev.type] || '#22D3EE';
           const isRunning = dev.status === 'running';
 
           return (
             <div
               key={dev.id}
-              className="bg-surface border border-border rounded-card p-5 shadow-sm space-y-4 hover:border-border/80 transition-all"
+              className="bg-surface border border-border rounded-card p-5 shadow-sm space-y-4 hover:border-primary/40 transition-all hover:shadow-[0_0_20px_rgba(34,211,238,0.06)]"
             >
               {/* Header */}
               <div className="flex items-start justify-between gap-3">
@@ -193,11 +194,11 @@ export default function SmartDevices() {
                   <span
                     className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono border ${
                       isRunning
-                        ? 'bg-primary/10 text-primary border-primary/30'
+                        ? 'bg-primary/10 text-primary border-primary/30 shadow-[0_0_8px_rgba(34,211,238,0.2)]'
                         : 'bg-surface-2 text-muted border-border'
                     }`}
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full ${isRunning ? 'bg-primary animate-pulse' : 'bg-muted'}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full ${isRunning ? 'bg-primary animate-pulse' : 'bg-muted/60'}`} />
                     <span className="capitalize">{dev.status}</span>
                   </span>
                   <Badge variant={dev.badge || 'Measured'} />
@@ -213,7 +214,7 @@ export default function SmartDevices() {
                 </div>
                 <div>
                   <span className="text-[10px] text-muted uppercase">Billed Cost</span>
-                  <p className="font-bold text-text text-sm mt-0.5">${dev.totalCostUsd.toFixed(2)}</p>
+                  <p className="font-bold text-primary text-sm mt-0.5">${dev.totalCostUsd.toFixed(2)}</p>
                   <p className="text-[10px] text-muted">TOU actual</p>
                 </div>
                 <div>
@@ -246,10 +247,10 @@ export default function SmartDevices() {
                   <div className="h-28 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={dev.monthlyHistory} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="2 2" stroke="#26323A" vertical={false} />
+                        <CartesianGrid strokeDasharray="2 2" stroke="#1F334D" vertical={false} />
                         <XAxis dataKey="month" stroke="#8FA1A8" fontSize={9} tickLine={false} fontFamily="monospace" />
                         <YAxis stroke="#8FA1A8" fontSize={9} tickLine={false} fontFamily="monospace" />
-                        <Bar dataKey="kwh" fill={color} radius={[2, 2, 0, 0]} />
+                        <Bar dataKey="kwh" fill={color} radius={[3, 3, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -258,7 +259,7 @@ export default function SmartDevices() {
 
               {/* Device Insight Callout */}
               <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-xs flex items-start gap-2.5">
-                <Lightbulb className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                <Lightbulb className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                 <div className="text-[11px] text-muted leading-relaxed">
                   <span className="font-semibold text-primary block text-[10px] uppercase font-mono mb-0.5">
                     Efficiency Recommendation
@@ -298,7 +299,7 @@ export default function SmartDevices() {
               {devices.map(dev => {
                 const peakRatio = dev.totalKwh > 0 ? ((dev.peakKwh / dev.totalKwh) * 100).toFixed(1) : '0.0';
                 return (
-                  <tr key={dev.id} className="hover:bg-surface-2/40 transition-colors">
+                  <tr key={dev.id} className="hover:bg-surface-2/60 transition-colors">
                     <td className="py-3 px-3 font-semibold text-text">{dev.name}</td>
                     <td className="py-3 px-3 text-muted">{dev.powerRatingWatts} W</td>
                     <td className="py-3 px-3">{dev.totalKwh.toFixed(1)} kWh</td>
@@ -321,4 +322,3 @@ export default function SmartDevices() {
     </div>
   );
 }
-

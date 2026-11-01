@@ -1,6 +1,8 @@
 import React from 'react';
 
-export default function PageHeader({ title, description, actions, badge }) {
+export default function PageHeader({ title, description, subtitle, actions, badge }) {
+  const subtext = description || subtitle;
+
   return (
     <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-border">
       <div>
@@ -8,8 +10,8 @@ export default function PageHeader({ title, description, actions, badge }) {
           <h1 className="text-2xl font-bold tracking-tight text-text">{title}</h1>
           {badge}
         </div>
-        {description && (
-          <p className="text-sm text-muted mt-1 max-w-2xl">{description}</p>
+        {subtext && (
+          <p className="text-sm text-muted mt-1 max-w-3xl">{subtext}</p>
         )}
       </div>
       {actions && (

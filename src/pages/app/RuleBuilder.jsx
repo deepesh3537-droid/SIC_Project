@@ -82,7 +82,7 @@ export default function RuleBuilder() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-300">
       {/* Page Header */}
       <PageHeader
         title="Custom IF-THEN Rule Builder"
@@ -92,10 +92,10 @@ export default function RuleBuilder() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Rule Composition Form */}
-        <div className="lg:col-span-2 bg-surface border border-border rounded-xl p-5 space-y-5">
+        <div className="lg:col-span-2 bg-surface border border-border rounded-card p-6 space-y-5 shadow-sm">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-text text-sm">Rule Configuration</h3>
-            <span className="text-xs text-muted">Defines triggering criteria and action</span>
+            <span className="text-xs text-muted font-mono">Defines triggering criteria and action</span>
           </div>
 
           <form onSubmit={handleSubmitForApproval} className="space-y-4">
@@ -108,7 +108,7 @@ export default function RuleBuilder() {
                   value={ruleName}
                   onChange={(e) => setRuleName(e.target.value)}
                   required
-                  className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-xs text-text focus:outline-none focus:border-primary"
+                  className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-xs text-text focus:outline-none focus:border-primary transition-colors"
                 />
               </div>
               <div className="space-y-1.5">
@@ -118,16 +118,16 @@ export default function RuleBuilder() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   required
-                  className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-xs text-text focus:outline-none focus:border-primary"
+                  className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-xs text-text focus:outline-none focus:border-primary transition-colors"
                 />
               </div>
             </div>
 
             {/* IF Clause */}
-            <div className="p-4 rounded-xl bg-surface-2/60 border border-border space-y-3">
+            <div className="p-4 rounded-xl bg-surface-2 border border-border space-y-3">
               <div className="text-xs font-bold font-mono text-primary flex items-center gap-1.5">
                 <Sliders className="w-3.5 h-3.5" />
-                IF (Trigger Condition)
+                <span>IF (Trigger Condition)</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -185,17 +185,17 @@ export default function RuleBuilder() {
                       onChange={() => setTariffPeriod(tp)}
                       className="accent-primary"
                     />
-                    {tp}
+                    <span>{tp}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             {/* THEN Clause */}
-            <div className="p-4 rounded-xl bg-surface-2/60 border border-border space-y-3">
-              <div className="text-xs font-bold font-mono text-emerald-400 flex items-center gap-1.5">
+            <div className="p-4 rounded-xl bg-surface-2 border border-border space-y-3">
+              <div className="text-xs font-bold font-mono text-primary flex items-center gap-1.5">
                 <Play className="w-3.5 h-3.5 fill-current" />
-                THEN (Action to Execute)
+                <span>THEN (Action to Execute)</span>
               </div>
 
               <div className="space-y-1">
@@ -219,33 +219,33 @@ export default function RuleBuilder() {
                 type="button"
                 onClick={handleValidate}
                 disabled={validating}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-2 border border-border text-xs font-semibold text-text hover:bg-surface hover:border-primary transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-2 border border-border text-xs font-semibold text-text hover:bg-surface hover:border-primary transition-colors disabled:opacity-50"
               >
                 <Play className="w-3.5 h-3.5 text-primary" />
-                {validating ? 'Testing Against 5,832 Readings...' : 'Validate Against History'}
+                <span>{validating ? 'Testing Against 5,832 Readings...' : 'Validate Against History'}</span>
               </button>
 
               <button
                 type="submit"
                 disabled={submitting || !validationResult}
-                className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary text-black text-xs font-semibold hover:bg-primary-hover transition-colors shadow-sm disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-primary text-black text-xs font-semibold hover:bg-primary-hover transition-colors shadow-[0_0_15px_rgba(34,211,238,0.25)] disabled:opacity-50"
               >
                 <Send className="w-3.5 h-3.5" />
-                {submitting ? 'Submitting...' : 'Submit for Approval'}
+                <span>{submitting ? 'Submitting...' : 'Submit for Approval'}</span>
               </button>
             </div>
           </form>
 
           {submitSuccess && (
-            <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4" />
-              Rule submitted in "Pending" status! Redirecting to Automation Center for review...
+            <div className="p-3.5 rounded-xl bg-primary/10 border border-primary/30 text-primary text-xs flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>Rule submitted in "Pending" status! Redirecting to Automation Center for review...</span>
             </div>
           )}
         </div>
 
         {/* Historical Validation Results Box */}
-        <div className="bg-surface border border-border rounded-xl p-5 space-y-4 flex flex-col justify-between">
+        <div className="bg-surface border border-border rounded-card p-6 space-y-4 flex flex-col justify-between shadow-sm">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <h3 className="font-semibold text-text text-sm">Historical Validation Proof</h3>
@@ -254,16 +254,16 @@ export default function RuleBuilder() {
 
             {validationResult ? (
               <div className="space-y-4 pt-3">
-                <div className={`p-3 rounded-lg border flex items-center justify-between ${
-                  validationResult.is_safe ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-amber-500/10 border-amber-500/30'
+                <div className={`p-3.5 rounded-xl border flex items-center justify-between ${
+                  validationResult.is_safe ? 'bg-primary/10 border-primary/30' : 'bg-warning/10 border-warning/30'
                 }`}>
                   <div className="flex items-center gap-2 text-xs font-semibold text-text">
                     {validationResult.is_safe ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
                     ) : (
-                      <AlertTriangle className="w-4 h-4 text-amber-400" />
+                      <AlertTriangle className="w-4 h-4 text-warning" />
                     )}
-                    {validationResult.safety_assessment}
+                    <span>{validationResult.safety_assessment}</span>
                   </div>
                   <span className="font-mono text-xs font-bold text-text">
                     {validationResult.trigger_count} hits
@@ -300,7 +300,7 @@ export default function RuleBuilder() {
                       {validationResult.sample_timestamps.map((ts, idx) => (
                         <div key={idx} className="flex items-center gap-1.5">
                           <Clock className="w-3 h-3 text-muted" />
-                          {ts}
+                          <span>{ts}</span>
                         </div>
                       ))}
                     </div>
@@ -315,7 +315,7 @@ export default function RuleBuilder() {
             )}
           </div>
 
-          <div className="p-3 bg-surface-2/60 rounded-lg border border-border text-[11px] text-muted space-y-1">
+          <div className="p-3.5 bg-surface-2 rounded-xl border border-border text-[11px] text-muted space-y-1">
             <span className="font-semibold text-text block">Safety Guarantee (OD-1)</span>
             <p>Rules never activate automatically. Submitting places the rule in 'Pending' state until explicitly reviewed and approved by you.</p>
           </div>
@@ -324,4 +324,3 @@ export default function RuleBuilder() {
     </div>
   );
 }
-

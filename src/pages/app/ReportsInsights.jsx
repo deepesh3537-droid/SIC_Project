@@ -117,39 +117,45 @@ export default function ReportsInsights() {
   } = data || {};
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       {/* Page Header */}
       <PageHeader
         title="Reports & Insights"
         subtitle="Periodic energy accounts, device submeter breakdown, recommendation audit history, and export center"
         badge={<Badge variant="Measured" label="Verified Accounting" />}
-        action={
-          <div className="flex flex-wrap items-center gap-2">
+        actions={
+          <div className="flex flex-wrap items-center gap-2.5">
             {/* Timeframe Selector */}
-            <div className="flex items-center gap-1 bg-surface-2 p-1 rounded-lg border border-border text-xs">
+            <div className="flex items-center gap-1 bg-[#091019] p-1 rounded-xl border border-[#1F334D] text-xs">
               <button
                 onClick={() => handleTimeframeChange('monthly')}
-                className={`px-2.5 py-1 rounded font-medium transition-colors ${
-                  timeframe === 'monthly' ? 'bg-primary text-black font-semibold' : 'text-muted hover:text-text'
+                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  timeframe === 'monthly'
+                    ? 'bg-gradient-to-r from-cyan-500 to-teal-400 text-slate-950 font-bold shadow-sm shadow-cyan-500/20'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 Monthly
               </button>
               <button
                 onClick={() => handleTimeframeChange('weekly')}
-                className={`px-2.5 py-1 rounded font-medium transition-colors ${
-                  timeframe === 'weekly' ? 'bg-primary text-black font-semibold' : 'text-muted hover:text-text'
+                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  timeframe === 'weekly'
+                    ? 'bg-gradient-to-r from-cyan-500 to-teal-400 text-slate-950 font-bold shadow-sm shadow-cyan-500/20'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 Weekly
               </button>
               <button
                 onClick={() => handleTimeframeChange('daily')}
-                className={`px-2.5 py-1 rounded font-medium transition-colors ${
-                  timeframe === 'daily' ? 'bg-primary text-black font-semibold' : 'text-muted hover:text-text'
+                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  timeframe === 'daily'
+                    ? 'bg-gradient-to-r from-cyan-500 to-teal-400 text-slate-950 font-bold shadow-sm shadow-cyan-500/20'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                Daily (Last 60d)
+                Daily (60d)
               </button>
             </div>
 
@@ -157,7 +163,7 @@ export default function ReportsInsights() {
             <button
               onClick={() => handleExport('csv')}
               disabled={exporting}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-border text-xs font-medium text-text hover:bg-surface-2 transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0D1520] border border-[#1F334D] text-xs font-semibold text-slate-200 hover:text-white hover:border-emerald-500/40 hover:bg-[#142338] transition-all shadow-sm disabled:opacity-50"
             >
               <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
               Export CSV
@@ -165,9 +171,9 @@ export default function ReportsInsights() {
             <button
               onClick={() => handleExport('json')}
               disabled={exporting}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-border text-xs font-medium text-text hover:bg-surface-2 transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0D1520] border border-[#1F334D] text-xs font-semibold text-slate-200 hover:text-white hover:border-cyan-500/40 hover:bg-[#142338] transition-all shadow-sm disabled:opacity-50"
             >
-              <FileCode className="w-3.5 h-3.5 text-sky-400" />
+              <FileCode className="w-3.5 h-3.5 text-cyan-400" />
               Export JSON
             </button>
           </div>
@@ -215,30 +221,30 @@ export default function ReportsInsights() {
         <div className="h-72 w-full pt-2">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={timeSeries} margin={{ top: 15, right: 15, left: -15, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#22272e" />
-              <XAxis dataKey="label" stroke="#6b7280" fontSize={11} />
-              <YAxis yAxisId="left" stroke="#6b7280" fontSize={11} unit=" kWh" />
-              <YAxis yAxisId="right" orientation="right" stroke="#6b7280" fontSize={11} unit=" $" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#1F334D" opacity={0.6} />
+              <XAxis dataKey="label" stroke="#64748B" fontSize={11} tickLine={false} />
+              <YAxis yAxisId="left" stroke="#64748B" fontSize={11} unit=" kWh" tickLine={false} />
+              <YAxis yAxisId="right" orientation="right" stroke="#64748B" fontSize={11} unit=" $" tickLine={false} />
               <Tooltip 
-                content={({ active, payload, label }) => {
+                content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const d = payload[0].payload;
                     return (
-                      <div className="bg-surface border border-border p-3 rounded-lg shadow-lg text-xs space-y-1">
-                        <div className="font-semibold text-text">{d.label}</div>
-                        <div className="text-muted">Total Energy: <span className="font-mono font-bold text-primary">{formatKwh(d.totalKwh)}</span></div>
-                        <div className="text-muted">Cost: <span className="font-mono font-bold text-emerald-400">{formatCurrency(d.totalCostUsd)}</span></div>
-                        <div className="text-muted">Peak: <span className="font-mono text-text">{formatKwh(d.peakKwh)}</span></div>
-                        <div className="text-muted">Off-Peak: <span className="font-mono text-text">{formatKwh(d.offPeakKwh)}</span></div>
+                      <div className="bg-[#0B131E]/95 border border-[#1F334D] p-3 rounded-xl shadow-xl text-xs space-y-1.5 backdrop-blur-md">
+                        <div className="font-semibold text-slate-100">{d.label}</div>
+                        <div className="text-slate-400">Total Energy: <span className="font-mono font-bold text-cyan-400">{formatKwh(d.totalKwh)}</span></div>
+                        <div className="text-slate-400">Cost: <span className="font-mono font-bold text-emerald-400">{formatCurrency(d.totalCostUsd)}</span></div>
+                        <div className="text-slate-400">Peak: <span className="font-mono text-slate-200">{formatKwh(d.peakKwh)}</span></div>
+                        <div className="text-slate-400">Off-Peak: <span className="font-mono text-slate-200">{formatKwh(d.offPeakKwh)}</span></div>
                       </div>
                     );
                   }
                   return null;
                 }}
               />
-              <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px', color: '#9ca3af' }} />
+              <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px', color: '#94A3B8' }} />
               <Bar yAxisId="left" dataKey="totalKwh" name="Energy (kWh)" fill="#10B981" radius={[4, 4, 0, 0]} />
-              <Bar yAxisId="right" dataKey="totalCostUsd" name="Cost ($)" fill="#38BDF8" radius={[4, 4, 0, 0]} />
+              <Bar yAxisId="right" dataKey="totalCostUsd" name="Cost ($)" fill="#22D3EE" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -247,34 +253,34 @@ export default function ReportsInsights() {
       {/* Grid: Periodic Ledger Table & Appliance Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Periodic Ledger Table */}
-        <div className="lg:col-span-2 bg-surface border border-border rounded-xl p-5 space-y-4">
+        <div className="lg:col-span-2 bg-[#0D1520]/80 border border-[#1F334D] rounded-2xl p-5 space-y-4 backdrop-blur-md">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-text text-sm">Detailed Periodic Ledger</h3>
-              <p className="text-xs text-muted">Numerical energy accounting and tariff period split</p>
+              <h3 className="font-semibold text-slate-100 text-sm tracking-wide">Detailed Periodic Ledger</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Numerical energy accounting and tariff period split</p>
             </div>
             <Badge variant="Measured" label={`${timeSeries.length} Records`} />
           </div>
 
-          <div className="overflow-x-auto max-h-96">
+          <div className="overflow-x-auto max-h-96 rounded-xl border border-[#1F334D]/60">
             <table className="w-full text-left text-xs">
-              <thead className="bg-surface-2 text-muted border-b border-border sticky top-0">
+              <thead className="bg-[#091019] text-slate-400 border-b border-[#1F334D] sticky top-0">
                 <tr>
-                  <th className="py-2.5 px-3 font-medium">Period</th>
-                  <th className="py-2.5 px-3 font-medium">Total (kWh)</th>
-                  <th className="py-2.5 px-3 font-medium">Peak (kWh)</th>
-                  <th className="py-2.5 px-3 font-medium">Off-Peak (kWh)</th>
-                  <th className="py-2.5 px-3 font-medium">Total Cost</th>
+                  <th className="py-2.5 px-3.5 font-semibold">Period</th>
+                  <th className="py-2.5 px-3.5 font-semibold">Total (kWh)</th>
+                  <th className="py-2.5 px-3.5 font-semibold">Peak (kWh)</th>
+                  <th className="py-2.5 px-3.5 font-semibold">Off-Peak (kWh)</th>
+                  <th className="py-2.5 px-3.5 font-semibold">Total Cost</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-[#1F334D]/50 bg-[#0B131E]/40">
                 {timeSeries.map((row) => (
-                  <tr key={row.period} className="hover:bg-surface-2/40 transition-colors">
-                    <td className="py-2.5 px-3 font-medium text-text">{row.label}</td>
-                    <td className="py-2.5 px-3 font-mono font-semibold text-primary">{formatKwh(row.totalKwh)}</td>
-                    <td className="py-2.5 px-3 font-mono text-muted">{formatKwh(row.peakKwh)}</td>
-                    <td className="py-2.5 px-3 font-mono text-muted">{formatKwh(row.offPeakKwh)}</td>
-                    <td className="py-2.5 px-3 font-mono font-semibold text-emerald-400">{formatCurrency(row.totalCostUsd)}</td>
+                  <tr key={row.period} className="hover:bg-[#142338]/60 transition-colors">
+                    <td className="py-2.5 px-3.5 font-medium text-slate-200">{row.label}</td>
+                    <td className="py-2.5 px-3.5 font-mono font-bold text-cyan-400">{formatKwh(row.totalKwh)}</td>
+                    <td className="py-2.5 px-3.5 font-mono text-slate-400">{formatKwh(row.peakKwh)}</td>
+                    <td className="py-2.5 px-3.5 font-mono text-slate-400">{formatKwh(row.offPeakKwh)}</td>
+                    <td className="py-2.5 px-3.5 font-mono font-bold text-emerald-400">{formatCurrency(row.totalCostUsd)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -283,31 +289,31 @@ export default function ReportsInsights() {
         </div>
 
         {/* Appliance Share Matrix */}
-        <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
+        <div className="bg-[#0D1520]/80 border border-[#1F334D] rounded-2xl p-5 space-y-4 backdrop-blur-md">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-text text-sm">Appliance Submeter Split</h3>
-              <p className="text-xs text-muted">Cumulative share of household load</p>
+              <h3 className="font-semibold text-slate-100 text-sm tracking-wide">Appliance Submeter Split</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Cumulative share of household load</p>
             </div>
             <Badge variant="Measured" label="Submetered" />
           </div>
 
           <div className="space-y-3 pt-1">
             {applianceBreakdown.map((app) => (
-              <div key={app.appliance} className="bg-surface-2 p-3.5 rounded-lg border border-border space-y-2">
+              <div key={app.appliance} className="bg-[#091019]/80 p-3.5 rounded-xl border border-[#1F334D] space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-xs text-text">{app.appliance}</span>
-                  <span className="font-mono font-bold text-primary text-xs">{app.sharePercent}%</span>
+                  <span className="font-semibold text-xs text-slate-200">{app.appliance}</span>
+                  <span className="font-mono font-bold text-cyan-400 text-xs">{app.sharePercent}%</span>
                 </div>
-                <div className="w-full h-1.5 bg-surface rounded-full overflow-hidden">
+                <div className="w-full h-1.5 bg-[#152336] rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-primary rounded-full"
+                    className="h-full bg-gradient-to-r from-cyan-500 to-teal-400 rounded-full transition-all duration-300"
                     style={{ width: `${Math.min(app.sharePercent, 100)}%` }}
                   />
                 </div>
-                <div className="flex justify-between text-[11px] text-muted">
+                <div className="flex justify-between text-[11px] text-slate-400">
                   <span>Consumption:</span>
-                  <span className="font-mono text-text">{formatKwh(app.totalKwh)}</span>
+                  <span className="font-mono text-slate-200 font-medium">{formatKwh(app.totalKwh)}</span>
                 </div>
               </div>
             ))}
@@ -316,43 +322,43 @@ export default function ReportsInsights() {
       </div>
 
       {/* Recommendation & Automation Audit Trail Table */}
-      <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
+      <div className="bg-[#0D1520]/80 border border-[#1F334D] rounded-2xl p-5 space-y-4 backdrop-blur-md">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-text text-sm">Recommendation & Automation Audit Trail</h3>
-            <p className="text-xs text-muted">Governance lifecycle of AI-suggested rules, approvals, and activations</p>
+            <h3 className="font-semibold text-slate-100 text-sm tracking-wide">Recommendation & Automation Audit Trail</h3>
+            <p className="text-xs text-slate-400 mt-0.5">Governance lifecycle of AI-suggested rules, approvals, and activations</p>
           </div>
           <Badge variant="Audited" label="Human-in-the-Loop" />
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-xl border border-[#1F334D]/60">
           <table className="w-full text-left text-xs">
-            <thead className="bg-surface-2 text-muted border-b border-border">
+            <thead className="bg-[#091019] text-slate-400 border-b border-[#1F334D]">
               <tr>
-                <th className="py-2.5 px-3 font-medium">Rule ID</th>
-                <th className="py-2.5 px-3 font-medium">Name</th>
-                <th className="py-2.5 px-3 font-medium">Trigger Condition</th>
-                <th className="py-2.5 px-3 font-medium">Action Taken</th>
-                <th className="py-2.5 px-3 font-medium">Governance Status</th>
-                <th className="py-2.5 px-3 font-medium">Created At</th>
+                <th className="py-2.5 px-3.5 font-semibold">Rule ID</th>
+                <th className="py-2.5 px-3.5 font-semibold">Name</th>
+                <th className="py-2.5 px-3.5 font-semibold">Trigger Condition</th>
+                <th className="py-2.5 px-3.5 font-semibold">Action Taken</th>
+                <th className="py-2.5 px-3.5 font-semibold">Governance Status</th>
+                <th className="py-2.5 px-3.5 font-semibold">Created At</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-[#1F334D]/50 bg-[#0B131E]/40">
               {recommendationHistory.map((rec) => (
-                <tr key={rec.id} className="hover:bg-surface-2/40 transition-colors">
-                  <td className="py-3 px-3 font-mono font-semibold text-primary">{rec.ruleId}</td>
-                  <td className="py-3 px-3 font-medium text-text">{rec.ruleName}</td>
-                  <td className="py-3 px-3 font-mono text-muted max-w-xs truncate">{rec.triggerCondition}</td>
-                  <td className="py-3 px-3 text-muted max-w-xs truncate">{rec.action}</td>
-                  <td className="py-3 px-3">
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border ${
+                <tr key={rec.id} className="hover:bg-[#142338]/60 transition-colors">
+                  <td className="py-3 px-3.5 font-mono font-semibold text-cyan-400">{rec.ruleId}</td>
+                  <td className="py-3 px-3.5 font-medium text-slate-200">{rec.ruleName}</td>
+                  <td className="py-3 px-3.5 font-mono text-slate-400 max-w-xs truncate">{rec.triggerCondition}</td>
+                  <td className="py-3 px-3.5 text-slate-400 max-w-xs truncate">{rec.action}</td>
+                  <td className="py-3 px-3.5">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-semibold border ${
                       rec.status === 'active'
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                         : rec.status === 'pending'
-                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
                         : rec.status === 'rejected'
-                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                        : 'bg-muted/10 text-muted border-border'
+                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                        : 'bg-slate-800 text-slate-400 border-[#1F334D]'
                     }`}>
                       {rec.status === 'active' && <CheckCircle2 className="w-3 h-3" />}
                       {rec.status === 'rejected' && <XCircle className="w-3 h-3" />}
@@ -360,7 +366,7 @@ export default function ReportsInsights() {
                       {rec.status.toUpperCase()}
                     </span>
                   </td>
-                  <td className="py-3 px-3 text-muted font-mono">{new Date(rec.createdAt).toLocaleDateString()}</td>
+                  <td className="py-3 px-3.5 text-slate-400 font-mono">{new Date(rec.createdAt).toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -370,4 +376,3 @@ export default function ReportsInsights() {
     </div>
   );
 }
-
